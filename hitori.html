@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>📜 Historial - Farmacia Ortopedia Lili</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 <style>
@@ -116,7 +115,6 @@ button.realizar-corte { background:#16a34a; box-shadow:0 2px 6px #16a34a38;}
   </div>
 </div>
 
-<script src="config.js"></script>
 <script>
 // Usuario activo
 let usuarioActivo = localStorage.getItem("usuarioActivo");
@@ -126,18 +124,15 @@ else { document.getElementById("cajero").textContent = "👤 Cajero: "+usuarioAc
 // Formatear dinero
 function formatDinero(num){ return "$"+(num||0).toFixed(2); }
 
-// Cargar ventas desde Supabase
-async function cargarVentas(){ 
-  try{
-    const { data,error } = await supabase.from('ventas').select('*');
-    if(error) throw error;
-    return data||[];
-  }catch(e){ alert("Error cargando ventas: "+e.message); return []; }
+// Obtener ventas guardadas en localStorage desde ventas.html
+function cargarVentas(){
+  let ventas = localStorage.getItem("ventas");
+  return ventas ? JSON.parse(ventas) : [];
 }
 
-// Renderizar ventas generales y antibióticos
-async function renderVentas(){
-  const ventas = await cargarVentas();
+// Renderizar ventas
+function renderVentas(){
+  const ventas = cargarVentas();
   const tbodyGeneral = document.querySelector('#tabla-ventas-general tbody');
   const tbodyAnt = document.querySelector('#tabla-antibioticos tbody');
   tbodyGeneral.innerHTML=''; tbodyAnt.innerHTML='';
@@ -231,15 +226,20 @@ function calcularTotales(){
   document.getElementById('totalGeneralCorte').textContent=(totalEfectivo+tarjeta+transferencia+proveedor).toFixed(2);
 }
 
-// Finalizar corte
-async function finalizarCorte(){
+// Guardar y cargar cortes desde localStorage
+function finalizarCorte(){
   const totalEfectivo=parseFloat(document.getElementById('totalEfectivo').textContent)||0;
   const tarjeta=parseFloat(document.getElementById('totalTarjeta').value)||0;
   const transferencia=parseFloat(document.getElementById('totalTransferencia').value)||0;
   const proveedor=parseFloat(document.getElementById('totalProveedor').value)||0;
   const fecha=new Date().toLocaleString();
   const total=totalEfectivo+tarjeta+transferencia+proveedor;
-  try{ await supabase.from('caja').insert([{fecha,cajero:usuarioActivo,efectivo:totalEfectivo,tarjeta,transferencia,proveedor}]); }catch(e){ console.log('Error guardando corte:',e); }
+
+  let cortes=localStorage.getItem("cortes");
+  cortes = cortes ? JSON.parse(cortes) : [];
+  cortes.push({fecha,cajero:usuarioActivo,efectivo:totalEfectivo,tarjeta,transferencia,proveedor});
+  localStorage.setItem("cortes",JSON.stringify(cortes));
+
   const ticket=`-------------------------------
 CORTE DIARIO
 -------------------------------
@@ -264,23 +264,20 @@ Firma: _______________________
   cargarCortes();
 }
 
-// Cargar cortes
-async function cargarCortes(){
-  try{
-    const { data, error } = await supabase.from('caja').select('*').order('fecha',{ascending:false});
-    if(error) throw error;
-    const tbody=document.querySelector('#tablaCortes tbody'); tbody.innerHTML='';
-    (data||[]).forEach(c=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${c.fecha}</td><td>${c.cajero}</td><td>${c.efectivo||0}</td>
-        <td>${c.tarjeta||0}</td><td>${c.transferencia||0}</td><td>${c.proveedor||0}</td>`;
-      tbody.appendChild(tr);
-    });
-  }catch(e){ console.log('Error cargando cortes:', e); }
+function cargarCortes(){
+  let cortes=localStorage.getItem("cortes");
+  cortes = cortes ? JSON.parse(cortes) : [];
+  const tbody=document.querySelector('#tablaCortes tbody'); tbody.innerHTML='';
+  cortes.forEach(c=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${c.fecha}</td><td>${c.cajero}</td><td>${c.efectivo||0}</td>
+      <td>${c.tarjeta||0}</td><td>${c.transferencia||0}</td><td>${c.proveedor||0}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 // Inicializar
-(async()=>{ await renderVentas(); cargarCortes(); })();
+(function(){ renderVentas(); cargarCortes(); })();
 </script>
 </body>
 </html>
