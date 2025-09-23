@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel Admin - Farmacia Ortopedia Lili</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {margin:0; font-family:system-ui,sans-serif; background:#16213e; color:#e5e7eb;}
+header {background:#0f172a; padding:1.2rem; text-align:center; font-size:2rem; font-weight:bold;}
+.container {display:flex; min-height:30px;}
+aside {background:#1a243b; width:180px;}
+aside h2 {color:#60a5fa; font-size:1.2rem; padding: 2px; margin-bottom:1.5rem;}
+.nav-btn {display:block; width:100%; margin:0.2rem 0; padding:0.7rem 1rem; border:none; background:none; color:#e5e7eb; text-align:left; border-radius:8px; cursor:pointer;}
+.nav-btn.active, .nav-btn:hover {background:#2563eb; color:white;}
+main {flex:1; padding:0; background:#1e2f52;}
+iframe {width:100%; height:calc(100vh - 70px); border:none;}
+.logout {position:fixed;top:16px;right:24px;background:#dc2626; padding:8px 16px; border-radius:8px;font-weight:bold; cursor:pointer;}
+.logout:hover {background:#b91c1c;}
+.admin-section {display:none; padding:2em; border-radius:16px; margin:2em; background:#192541;}
+.admin-section.active {display:block;}
+table {width:100%; border-collapse:collapse; margin-top:1em; background:#1b2741;}
+th,td {border:1px solid #334; padding:7px 6px; text-align:left;}
+th {background:#223; color:#facc15;}
+tr:nth-child(even) {background:#232f4b;}
+input, select, button { padding:7px; border-radius:6px; border:none;}
+input, select { margin:0 0.4rem 0.7rem 0; background:#141f39; color:#fff;}
+button { background:#2563eb; color:white; cursor:pointer;}
+.btn-del {background:#dc2626;}
+.btn-edit {background:#f59e0b;}
+.btn-save {background:#16a34a;}
+.btn-small { font-size:0.95em; padding:3px 9px; margin-left:4px;}
+.flex {display:flex; gap:1em; align-items:center;}
+.area-chip {font-size:0.95em; background:#2563eb; color:white; border-radius:6px; padding:2px 10px;}
+</style>
+</head>
+<body>
+<header>👑  ADMINISTRACIÓN  👑</header>
+<button class="logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+<div class="container">
+  <aside>
+    <h2>Panel-Acciones</h2>
+    <hr>
+    <h2>📦 Inventario</h2>
+    <button class="nav-btn" onclick="openPanel('inven.html',this)">📦 Inventario - Farmacia</button>
+    <button class="nav-btn" onclick="openPanel('inven.html',this)">📦 Inventario - Tienda</button>
+    <button class="nav-btn" onclick="openPanel('inven.html',this)">📦 Inventario - Papelería</button>
+    <hr> 
+    <h2>📜 Historial</h2>
+    <button class="nav-btn" onclick="openPanel('hitori.html',this)">📜 Historial - Farmacia</button>
+    <button class="nav-btn" onclick="openPanel('hitori.html',this)">📜 Historial - Tienda</button>
+    <button class="nav-btn" onclick="openPanel('hitori.html',this)">📜 Historial - Papelería</button>
+    <hr> 
+    <h2>👤 Usuarios</h2>
+    <button class="nav-btn" onclick="showSection('usuarios',this)">👤 Usuarios</button>
+  </aside>
+  <main>
+    <iframe id="panelFrame" src="ven.html"></iframe>
+
+    <div id="editInv" class="admin-section">
+      <h2>Editar Inventario</h2>
+      <div class="flex">
+        <input id="inv-buscar" placeholder="Buscar producto...">
+        <button onclick="renderInv()">Buscar</button>
+      </div>
+      <table id="tabla-inv"><thead>
+        <tr><th>Nombre</th><th>Área</th><th>Stock</th><th>Precio</th><th>Editar</th><th>Borrar</th></tr>
+      </thead><tbody></tbody></table>
+      <h3>Agregar Producto</h3>
+      <input id="prod-nom" placeholder="Nombre">
+      <input id="prod-area" placeholder="Área">
+      <input id="prod-stock" type="number" placeholder="Stock">
+      <input id="prod-precio" type="number" placeholder="Precio">
+      <button class="btn-save" onclick="agregarProducto()">Agregar</button>
+    </div>
+
+    <div id="usuarios" class="admin-section">
+      <h2>👤 Gestión de Usuarios 👤</h2>
+      <table id="tabla-users">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Área</th>
+            <th>Contraseña</th>
+            <th>Borrar</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h3> ➕ Agregar Usuario 👤</h3>
+      <input id="user-nombre" placeholder="Nombre completo">
+      <select id="user-area">
+        <option value="">Selecciona área</option>
+        <option value="Farmacia">Farmacia</option>
+        <option value="Tienda">Tienda</option>
+        <option value="Papelería">Papelería</option>
+      </select>
+      <input id="user-pass" type="password" placeholder="Contraseña">
+      <select id="user-pagina">
+        <option value="ven.html">Página de ventas</option>
+        <option value="ejemplo1.html">Ejemplo 1</option>
+        <option value="ejemplo2.html">Ejemplo 2</option>
+      </select>
+      <button class="btn-save" onclick="agregarUsuario()">Agregar</button>
+    </div>
+  </main>
+</div>
+
+<script>
+// --- Datos ---
+let inventario = JSON.parse(localStorage.getItem("inventario")||"[]");
+let usuarios = JSON.parse(localStorage.getItem("usuarios")||"[]");
+
+// Inicial usuarios predeterminados
+if(usuarios.length===0){
+  usuarios = [
+    {usuario:"admin", nombre:"Administrador", area:"Admin", pass:"admin123", pagina:"admin.html"},
+    {usuario:"Juan", nombre:"Juan", area:"Farmacia", pass:"1234", pagina:"ven.html"},
+    {usuario:"Maria", nombre:"Maria", area:"Tienda", pass:"1234", pagina:"ven.html"}
+  ];
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+}
+
+// --- Navegación ---
+function openPanel(page, btn){
+  document.getElementById('panelFrame').style.display='block';
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('panelFrame').src=page;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function showSection(id, btn){
+  document.getElementById('panelFrame').style.display='none';
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function cerrarSesion(){ 
+  localStorage.removeItem("usuarioActivo"); 
+  window.location.href="index.html"; 
+}
+
+// Solo admin puede acceder
+if(localStorage.getItem('usuarioActivo')!=='admin'){
+  alert('Acceso solo para administrador');
+  window.location.href="index.html";
+}
+
+// --- Inventario ---
+function renderInv(){
+  let tbody = document.querySelector("#tabla-inv tbody");
+  let q = document.getElementById("inv-buscar").value.toLowerCase();
+  tbody.innerHTML="";
+  inventario.filter(p=>!q||p.nombre.toLowerCase().includes(q))
+    .forEach(p=>{
+      let tr = document.createElement('tr');
+      tr.innerHTML=`<td>${p.nombre}</td><td>${p.area||""}</td><td>${p.stock}</td><td>${p.precio}</td>
+        <td><button class="btn-edit btn-small" onclick="editarProducto('${p.nombre}')">Editar</button></td>
+        <td><button class="btn-del btn-small" onclick="borrarProducto('${p.nombre}')">Borrar</button></td>`;
+      tbody.appendChild(tr);
+    });
+}
+
+function agregarProducto(){
+  let nombre=document.getElementById("prod-nom").value;
+  let area=document.getElementById("prod-area").value;
+  let stock=parseInt(document.getElementById("prod-stock").value);
+  let precio=parseFloat(document.getElementById("prod-precio").value);
+  if(!nombre||!area||isNaN(stock)||isNaN(precio)) return alert("Completa todos los campos");
+  inventario.push({nombre, area, stock, precio});
+  localStorage.setItem("inventario", JSON.stringify(inventario));
+  renderInv();
+}
+
+function editarProducto(nombre){
+  let p = inventario.find(x=>x.nombre===nombre);
+  if(!p) return;
+  let nuevo = prompt(`Editar (nombre,area,stock,precio)`, `${p.nombre},${p.area},${p.stock},${p.precio}`);
+  if(!nuevo) return;
+  let [n,a,s,pr] = nuevo.split(",");
+  p.nombre=n; p.area=a; p.stock=parseInt(s); p.precio=parseFloat(pr);
+  localStorage.setItem("inventario", JSON.stringify(inventario));
+  renderInv();
+}
+
+function borrarProducto(nombre){
+  if(!confirm("Borrar este producto?")) return;
+  inventario = inventario.filter(p=>p.nombre!==nombre);
+  localStorage.setItem("inventario", JSON.stringify(inventario));
+  renderInv();
+}
+
+// --- Usuarios ---
+function renderUsers(){
+  let tbody = document.querySelector("#tabla-users tbody");
+  tbody.innerHTML="";
+  usuarios.forEach(u=>{
+    let esPred = ["admin"].includes(u.usuario.toLowerCase());
+    tbody.innerHTML+=`<tr>
+      <td>${u.nombre}</td>
+      <td>${u.area}</td>
+      <td>${u.pass}</td>
+      <td>${esPred?'<span style="color:#888">Bloqueado</span>':'<button class="btn-del btn-small" onclick="borrarUsuario(\''+u.nombre+'\')">Borrar</button>'}</td>
+    </tr>`;
+  });
+}
+
+function agregarUsuario(){
+  let nombre=document.getElementById("user-nombre").value.trim();
+  let area=document.getElementById("user-area").value;
+  let pass=document.getElementById("user-pass").value.trim();
+  let pagina=document.getElementById("user-pagina").value;
+  
+  if(!nombre || !area || !pass || !pagina) return alert("Completa todos los campos");
+  if(usuarios.find(u=>u.nombre===nombre)) return alert("Usuario ya existe");
+
+  usuarios.push({usuario:nombre, nombre, area, pass, pagina});
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+  renderUsers();
+}
+
+function borrarUsuario(nombre){
+  if(["admin"].includes(nombre.toLowerCase())) return alert("No puedes borrar usuarios predeterminados");
+  usuarios = usuarios.filter(u=>u.nombre!==nombre);
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+  renderUsers();
+}
+
+// Inicializar
+renderInv();
+renderUsers();
+</script>
+</body>
+</html>
