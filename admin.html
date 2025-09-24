@@ -42,13 +42,13 @@ button { background:#2563eb; color:white; cursor:pointer;}
     <hr>
     <h2>📦 Inventario</h2>
     <button class="nav-btn" onclick="openPanel('inven.html',this)">📦 Inventario - Farmacia</button>
-    <button class="nav-btn" onclick="openPanel('inven.html',this)">📦 Inventario - Tienda</button>
-    <button class="nav-btn" onclick="openPanel('inven.html',this)">📦 Inventario - Papelería</button>
+    <button class="nav-btn" onclick="openPanel('inventienda.html',this)">📦 Inventario - Tienda</button>
+    <button class="nav-btn" onclick="openPanel('ventienda.html',this)">📦 Inventario - Papelería</button>
     <hr> 
     <h2>📜 Historial</h2>
-    <button class="nav-btn" onclick="openPanel('hitori.html',this)">📜 Historial - Farmacia</button>
-    <button class="nav-btn" onclick="openPanel('hitori.html',this)">📜 Historial - Tienda</button>
-    <button class="nav-btn" onclick="openPanel('hitori.html',this)">📜 Historial - Papelería</button>
+    <button class="nav-btn" onclick="openPanel('hitori.html?area=farmacia',this)">📜 Historial - Farmacia</button>
+    <button class="nav-btn" onclick="openPanel('tiendah.html',this)">📜 Historial - Tienda</button>
+    <button class="nav-btn" onclick="openPanel('histotienda.html',this)">📜 Historial - Papelería</button>
     <hr> 
     <h2>👤 Usuarios</h2>
     <button class="nav-btn" onclick="showSection('usuarios',this)">👤 Usuarios</button>
@@ -81,42 +81,41 @@ button { background:#2563eb; color:white; cursor:pointer;}
             <th>Nombre</th>
             <th>Área</th>
             <th>Contraseña</th>
+            <th>Página</th>
             <th>Borrar</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
       <h3> ➕ Agregar Usuario 👤</h3>
-      <input id="user-nombre" placeholder="Nombre completo">
+      <input id="user-nombre" placeholder="Usuario">
       <select id="user-area">
         <option value="">Selecciona área</option>
         <option value="Farmacia">Farmacia</option>
         <option value="Tienda">Tienda</option>
         <option value="Papelería">Papelería</option>
+        <option value="Admin">Admin</option>
       </select>
       <input id="user-pass" type="password" placeholder="Contraseña">
-      <select id="user-pagina">
-        <option value="ven.html">Página de ventas</option>
-        <option value="ejemplo1.html">Ejemplo 1</option>
-        <option value="ejemplo2.html">Ejemplo 2</option>
-      </select>
+      <input id="user-pagina" placeholder="Página (ej: ven.html)">
       <button class="btn-save" onclick="agregarUsuario()">Agregar</button>
     </div>
   </main>
 </div>
 
 <script>
-// --- Datos ---
+// --- Usuarios base sincronizados con login ---
+const usuariosBase = [
+  {nombre:"admin", area:"Admin", pass:"admin123", pagina:"admin.html"},
+  {nombre:"farmacia", area:"Farmacia", pass:"farmacia123", pagina:"ven.html"},
+  {nombre:"tienda", area:"Tienda", pass:"tienda123", pagina:"ven.html?area=tienda"},
+  {nombre:"papeleria", area:"Papelería", pass:"papeleria123", pagina:"ven.html?area=papeleria"}
+];
+
 let inventario = JSON.parse(localStorage.getItem("inventario")||"[]");
 let usuarios = JSON.parse(localStorage.getItem("usuarios")||"[]");
-
-// Inicial usuarios predeterminados
 if(usuarios.length===0){
-  usuarios = [
-    {usuario:"admin", nombre:"Administrador", area:"Admin", pass:"admin123", pagina:"admin.html"},
-    {usuario:"Juan", nombre:"Juan", area:"Farmacia", pass:"1234", pagina:"ven.html"},
-    {usuario:"Maria", nombre:"Maria", area:"Tienda", pass:"1234", pagina:"ven.html"}
-  ];
+  usuarios = usuariosBase;
   localStorage.setItem("usuarios", JSON.stringify(usuarios));
 }
 
@@ -196,13 +195,14 @@ function borrarProducto(nombre){
 function renderUsers(){
   let tbody = document.querySelector("#tabla-users tbody");
   tbody.innerHTML="";
-  usuarios.forEach(u=>{
-    let esPred = ["admin"].includes(u.usuario.toLowerCase());
+  usuarios.forEach((u,i)=>{
+    let esPred = ["admin"].includes(u.nombre.toLowerCase());
     tbody.innerHTML+=`<tr>
       <td>${u.nombre}</td>
       <td>${u.area}</td>
       <td>${u.pass}</td>
-      <td>${esPred?'<span style="color:#888">Bloqueado</span>':'<button class="btn-del btn-small" onclick="borrarUsuario(\''+u.nombre+'\')">Borrar</button>'}</td>
+      <td>${u.pagina}</td>
+      <td>${esPred?'<span style="color:#888">Bloqueado</span>':'<button class="btn-del btn-small" onclick="borrarUsuario('+i+')">Borrar</button>'}</td>
     </tr>`;
   });
 }
@@ -211,19 +211,19 @@ function agregarUsuario(){
   let nombre=document.getElementById("user-nombre").value.trim();
   let area=document.getElementById("user-area").value;
   let pass=document.getElementById("user-pass").value.trim();
-  let pagina=document.getElementById("user-pagina").value;
+  let pagina=document.getElementById("user-pagina").value.trim();
   
   if(!nombre || !area || !pass || !pagina) return alert("Completa todos los campos");
   if(usuarios.find(u=>u.nombre===nombre)) return alert("Usuario ya existe");
 
-  usuarios.push({usuario:nombre, nombre, area, pass, pagina});
+  usuarios.push({nombre, area, pass, pagina});
   localStorage.setItem("usuarios", JSON.stringify(usuarios));
   renderUsers();
 }
 
-function borrarUsuario(nombre){
-  if(["admin"].includes(nombre.toLowerCase())) return alert("No puedes borrar usuarios predeterminados");
-  usuarios = usuarios.filter(u=>u.nombre!==nombre);
+function borrarUsuario(i){
+  if(usuarios[i].nombre.toLowerCase()==="admin") return alert("No puedes borrar al administrador");
+  usuarios.splice(i,1);
   localStorage.setItem("usuarios", JSON.stringify(usuarios));
   renderUsers();
 }

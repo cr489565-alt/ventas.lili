@@ -16,7 +16,7 @@ body {
   margin:0;
 }
 
-/* Contenedor principal: dos columnas */
+/* Contenedor principal */
 .container {
   display:flex;
   background:#ffffff;
@@ -29,7 +29,7 @@ body {
   animation: fadeIn 1s ease-in-out;
 }
 
-/* Lado izquierdo: logo + descripción */
+/* Panel izquierdo */
 .left-panel {
   flex:1;
   background:#ffffff;
@@ -52,7 +52,7 @@ body {
   color:#000000;
 }
 
-/* Lado derecho: formulario */
+/* Panel derecho */
 .right-panel {
   flex:1;
   display:flex;
@@ -102,22 +102,6 @@ button:hover {
   height:1.3em;
 }
 
-/* Slogan dentro del panel izquierdo */
-.left-panel .slogan {
-  font-size:1.3rem;
-  font-weight:bold;
-  margin-bottom:15px;
-}
-
-/* Footer */
-footer {
-  margin-top:25px;
-  text-align:center;
-  font-size:0.95rem;
-  color:#374151;
-  width:100%;
-}
-
 /* Animaciones */
 @keyframes fadeIn {
   from {opacity:0; transform:scale(0.95);}
@@ -127,10 +111,8 @@ footer {
 </head>
 <body>
 
-<!-- Contenedor principal -->
 <div class="container">
-
-  <!-- Panel izquierdo: logo + descripción -->
+  <!-- Panel izquierdo -->
   <div class="left-panel">
     <img src="ventas.png" alt="Logo Farmacia Ortopedia Lili">
     <div class="slogan">💊 Ventas fáciles, inventario siempre al día 💊</div>
@@ -139,7 +121,7 @@ footer {
     </div>
   </div>
 
-  <!-- Panel derecho: formulario de login -->
+  <!-- Panel derecho -->
   <div class="right-panel">
     <form class="login-box" id="loginForm" autocomplete="off">
       <h3>🏪 VENTASLILI - ORTOPEDIA & FARMACIA 🏪</h3>
@@ -152,18 +134,23 @@ footer {
       <button type="submit">Entrar</button>
     </form>
   </div>
-
 </div>
 
-
 <script>
-// Usuarios locales
-const usuariosLocal = [
+// Usuarios predeterminados (solo se guardan una vez)
+const usuariosBase = [
   {usuario:"admin", nombre:"Administrador", pass:"admin123", area:"Admin", pagina:"admin.html"},
   {usuario:"farmacia", nombre:"Farmacia", pass:"admin123", area:"Farmacia", pagina:"ven.html"},
   {usuario:"tienda", nombre:"Tienda", pass:"admin123", area:"Tienda", pagina:"ven.html?area=tienda"},
   {usuario:"papeleria", nombre:"Papelería", pass:"admin123", area:"Papelería", pagina:"ven.html?area=papeleria"}
 ];
+
+// Cargar usuarios desde localStorage o inicializar
+let usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+if(usuarios.length === 0){
+  usuarios = usuariosBase;
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+}
 
 // Accesos rápidos
 const accesosRapidos = {
@@ -171,6 +158,7 @@ const accesosRapidos = {
   "ventas2024": {usuario:"ventas", area:"Ventas", pagina:"ven.html"}
 };
 
+// Validación login
 document.getElementById("loginForm").onsubmit = function(e){
   e.preventDefault();
   const u = document.getElementById("usuario").value.trim();
@@ -188,8 +176,8 @@ document.getElementById("loginForm").onsubmit = function(e){
     return;
   }
 
-  // Validación usuarios locales
-  const usuario = usuariosLocal.find(x=>x.usuario===u && x.pass===p);
+  // Validación contra usuarios en localStorage
+  const usuario = usuarios.find(x=>x.usuario===u && x.pass===p);
   if(usuario){
     localStorage.setItem("usuarioActivo", usuario.usuario);
     localStorage.setItem("areaActiva", usuario.area);

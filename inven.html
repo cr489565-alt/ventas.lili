@@ -9,7 +9,24 @@
 <style>
 * {box-sizing:border-box;}
 body { font-family: system-ui, sans-serif; background:#1e2f52; color:#e5e7eb; margin:0; padding:0;}
-header {background:#111827; padding:16px; font-size:20px; font-weight:bold; text-align:center;}
+header {
+    background:#111827; 
+    padding:16px; 
+    font-size:30px; 
+    font-weight:bold; 
+    text-align:center; 
+    position:relative;
+}
+header img {
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform:translateY(-50%);
+    height:40px;
+      width: 150px;
+    height: 100px;
+    border-radius: 25px;
+}
 main {padding:16px; display:flex; flex-direction:column; gap:16px;}
 .main-menu { display:flex; gap:12px; background:#111827; padding:10px 16px; position:sticky; top:0; z-index:1000; border-bottom:1px solid #1f2937;}
 .main-menu .menu-link {color:#e5e7eb; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:500; transition:0.2s;}
@@ -19,6 +36,7 @@ main {padding:16px; display:flex; flex-direction:column; gap:16px;}
 #logout:hover {background:#b91c1c;}
 #admin {background:#26a9dc; padding:8px 12px; border-radius:8px; color:white; border:none; cursor:pointer; transition:0.2s;}
 #admin:hover {background:#2563eb;}
+#searchBar {margin-left:10px; padding:8px; border-radius:6px; border:none; width:200px;}
 #cajero {font-size:14px; margin-left:16px; color:#facc15;}
 input, button, select {padding:9px; border-radius:6px; border:none; margin:4px 0;}
 input, select {width:200px;}
@@ -30,20 +48,21 @@ button:hover {background:#1d4ed8;}
 .btn-pdf{background:#facc15; color:#000; margin-left:5px;} .btn-pdf:hover{background:#eab308;}
 .oculto{display:none;}
 .panel-admin{background:#111827; border:2px solid #2563eb; padding:1rem; border-radius:12px; margin-bottom:1rem;}
+/* Colores dinámicos */
 .stock-verde{background:#16a34a; color:#fff;}
 .stock-amarillo{background:#eab308; color:#000;}
 .stock-rojo{background:#b91c1c; color:#fff;}
+.stockmin-rojo{background:#f6ff00; color:#000;}
 .cad-verde{background:#16a34a; color:#fff;}
 .cad-amarillo{background:#eab308; color:#000;}
 .cad-rojo{background:#b91c1c; color:#fff;}
-.categoria-antibiotico{background:#16a34a; color:#fff;}
-.categoria-papeleria{background:#7c3e12; color:#fff;}
-.categoria-tienda{background:#9d4edd; color:#fff;}
-.categoria-farmacia{background:#facc15; color:#000;}
-.categoria-proveedores{background:#f97316; color:#fff;}
-@keyframes fadein { from{opacity:0;transform:translateY(30px);} to{opacity:1;transform:translateY(0);} }
-section { text-align: center; width: 95%; background: linear-gradient(120deg,#111827 80%,#2563eb11 100%); padding: 24px; border-radius: 15px; box-shadow: 0 8px 28px rgba(0,0,0,.35); margin: 12px auto; transition: transform 0.2s, box-shadow 0.2s; }
-section:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,.45); }
+.entradas-azul{background:#2563eb; color:#fff;}
+.categoria-farmacia{background:#9d4edd; color:#fff;}
+.categoria-tienda{background:#7c3e12; color:#fff;}
+.categoria-antibiotico{background:#f97316; color:#fff;}
+.categoria-papeleria{background:#ec4899; color:#fff;}
+.categoria-proveedores{background:#f59e0b; color:#fff;}
+section { text-align: center; width: 95%; background: linear-gradient(120deg,#111827 80%,#2563eb11 100%); padding: 24px; border-radius: 15px; box-shadow: 0 8px 28px rgba(0,0,0,.35); margin: 12px auto; }
 h2.seccion { display:flex; justify-content:space-between; align-items:center; margin-top:0; color:#60a5fa; }
 table {width:100%; border-collapse:collapse; margin-top:12px;}
 th, td {padding:8px; border:1px solid #374151; text-align:left;}
@@ -51,18 +70,22 @@ th {background:#1f2937;}
 </style>
 </head>
 <body>
-<header>📦 Inventario - Farmacia Lili Óptica</header>
+<header>
+    <img src="ventas.png" alt="Logo Ventas">
+    📦 Inventario - Farmacia Lili Óptica📦
+</header>
 <nav class="main-menu">
   <a href="ven.html" class="menu-link">💳 Ventas</a>
   <a href="inven.html" class="menu-link active">📦 Inventario</a>
   <a href="hitori.html" class="menu-link">📜 Historial</a>
   <span id="cajero"></span>
-  <button id="admin">Administrador</button>
+  <button id="admin">🔑 Admin</button>
+  <input type="text" id="searchBar" placeholder="🔎 Buscar...">
   <button id="logout">Cerrar Sesión</button>
 </nav>
 
 <section id="loginSection" class="oculto">
-  <h2>👑 PANEL ADMINISTRACIÓN</h2>
+  <h2>👑 PANEL ADMINISTRACIÓN 👑</h2>
   🔐 Ingresa Contraseña
   <form id="loginForm">
     <input type="password" id="adminPass" placeholder="Contraseña" required>
@@ -98,7 +121,9 @@ th {background:#1f2937;}
 
 <section id="generalSection">
   <h2 class="seccion">📦 Inventario - General
-    <button class="btn btn-pdf oculto" onclick="imprimirPDF('tablaGeneralCompleta','Inventario General')">🖨️ Descargar PDF</button>
+    <button class="btn btn-pdf oculto" onclick="imprimirPDF('tablaGeneralCompleta','Inventario General')">📄 General</button>
+    <button class="btn btn-pdf oculto" onclick="imprimirPDF('tablaAntibioticos','Inventario Antibióticos')">💊 Antibióticos</button>
+    <button class="btn btn-pdf oculto" onclick="imprimirPDF('tablaProveedores','Inventario Proveedores')">📦 Proveedores</button>
   </h2>
   <table id="tablaGeneralCompleta">
     <thead>
@@ -113,9 +138,7 @@ th {background:#1f2937;}
 </section>
 
 <section id="AntibioticosSection">
-  <h2 class="seccion">💊 Antibióticos
-    <button class="btn btn-pdf oculto" onclick="imprimirPDF('tablaAntibioticos','Inventario Antibióticos')">🖨️ Descargar PDF</button>
-  </h2>
+  <h2 class="seccion">💊 Antibióticos</h2>
   <table id="tablaAntibioticos">
     <thead>
       <tr>
@@ -124,37 +147,26 @@ th {background:#1f2937;}
         <th>Categoría</th><th>Caducidad</th><th>Acciones</th>
       </tr>
     </thead>
-    <tbody><tr><td colspan="10">Sin productos</td></tr></tbody>
+    <tbody></tbody>
   </table>
 </section>
 
 <section id="ProveedoresSection">
-  <h2 class="seccion">📦 Proveedores
-    <button class="btn btn-pdf oculto" onclick="imprimirPDF('tablaProveedores','Inventario Proveedores')">🖨️ Descargar PDF</button>
-  </h2>
+  <h2 class="seccion">📦 Proveedores</h2>
   <table id="tablaProveedores">
     <thead>
       <tr>
         <th>Nombre</th><th>Código</th><th>Categoría</th><th>Acciones</th>
       </tr>
     </thead>
-    <tbody><tr><td colspan="4">Sin productos</td></tr></tbody>
+    <tbody></tbody>
   </table>
 </section>
 
 <script>
-// ---------------------- Usuario Activo ----------------------
+// ---------------------- Variables y funciones previas ----------------------
 let usuarioActivo = localStorage.getItem("usuarioActivo") || "Cajero";
 document.getElementById("cajero").textContent = "👤 Cajero: " + usuarioActivo;
-
-// ---------------------- Logout ----------------------
-document.getElementById("logout").onclick = () => {
-    localStorage.removeItem("usuarioActivo");
-    alert("Sesión cerrada.");
-    window.location.reload();
-};
-
-// ---------------------- Variables ----------------------
 let userType='cajero';
 const adminBtn=document.getElementById('admin');
 const loginSection=document.getElementById('loginSection');
@@ -174,55 +186,7 @@ const tablas={
 let productosInventario = JSON.parse(localStorage.getItem('inventario')) || [];
 let productoEnEdicion = null;
 
-// ---------------------- Login Admin ----------------------
-adminBtn.addEventListener('click',()=>loginSection.classList.toggle('oculto'));
-loginForm.addEventListener('submit', e=>{
-  e.preventDefault();
-  const passInput=document.getElementById('adminPass');
-  if(passInput.value==='1234'){
-    userType='admin';
-    loginSection.classList.add('oculto');
-    adminSection.classList.remove('oculto');
-    alert('Acceso como Administrador');
-  } else {
-    userType='cajero';
-    loginSection.classList.add('oculto');
-    alert('Acceso como Cajero');
-  }
-  passInput.value='';
-  renderInventario();
-  renderTablasInventario();
-});
-
-// ---------------------- Salir Admin ----------------------
-salirAdmin.addEventListener('click', ()=>{
-  userType='cajero';
-  adminSection.classList.add('oculto');
-  renderInventario();
-  renderTablasInventario();
-});
-
-// ---------------------- Campos dinámicos ----------------------
-categoriaSelect.addEventListener('change', ()=>{
-  const lote=document.getElementById('lote'), cad=document.getElementById('caducidad'),
-        precio=document.getElementById('precio'), stock=document.getElementById('stock'),
-        stockMin=document.getElementById('stockMin'), entradas=document.getElementById('entradas');
-  if(categoriaSelect.value==='Antibiótico'){
-    lote.style.display='inline-block'; cad.style.display='inline-block';
-    precio.style.display='inline-block'; stock.style.display='inline-block';
-    stockMin.style.display='inline-block'; entradas.style.display='inline-block';
-  } else if(categoriaSelect.value==='Proveedores'){
-    lote.style.display='none'; cad.style.display='none';
-    precio.style.display='none'; stock.style.display='none';
-    stockMin.style.display='none'; entradas.style.display='none';
-  } else{
-    lote.style.display='none'; cad.style.display='none';
-    precio.style.display='inline-block'; stock.style.display='inline-block';
-    stockMin.style.display='inline-block'; entradas.style.display='inline-block';
-  }
-});
-
-// ---------------------- Guardar y eliminar productos ----------------------
+// ---------------------- Guardar, eliminar y renderizar ----------------------
 function guardarProductoLocal(producto){
   if(productoEnEdicion){
     const index = productosInventario.findIndex(p=>p.codigo===productoEnEdicion.codigo);
@@ -241,42 +205,41 @@ function eliminarProductoLocal(codigo){
   renderTablasInventario();
 }
 
-// ---------------------- Render Tablas ----------------------
 function renderTablasInventario(){
   tablaGeneral.innerHTML = '';
   tablas['Antibiótico'].innerHTML = '';
   tablas['Proveedores'].innerHTML = '';
-
-  const productosNoProveedores = productosInventario.filter(p => p.categoria !== 'Proveedores');
   const productosProveedores = productosInventario.filter(p => p.categoria === 'Proveedores');
-
-  productosNoProveedores.forEach(p=>{
+  productosInventario.forEach(p=>{
     const row = document.createElement('tr');
+    const stockClass = getStockClass(p.stock,p.stockMin);
+    const cadClass = getCaducidadClass(p.caducidad);
+    const catClass = getCategoriaClass(p.categoria);
     row.innerHTML=`
-      <td>${p.nombre}</td>
-      <td>${p.codigo}</td>
-      <td>${p.precio}</td>
-      <td>${p.lote||''}</td>
-      <td>${p.stock||''}</td>
-      <td>${p.stockMin||''}</td>
-      <td>${p.entradas||''}</td>
-      <td>${p.categoria}</td>
-      <td>${p.caducidad||''}</td>
+      <td>${p.nombre||"ND"}</td>
+      <td>${p.codigo||"ND"}</td>
+      <td>${p.precio?`$${p.precio}`:"ND"}</td>
+      <td>${p.lote||"ND"}</td>
+      <td class="${stockClass}">${p.stock||"ND"}</td>
+      <td class="stockmin-rojo">${p.stockMin||"ND"}</td>
+      <td class="entradas-azul">${p.entradas||"ND"}</td>
+      <td class="${catClass}">${p.categoria||"ND"}</td>
+      <td class="${cadClass}">${p.caducidad||"ND"}</td>
       <td>
         ${userType==='admin' ? `<button class="btn btn-edit" onclick='editarProducto(${JSON.stringify(p)})'>✏️</button>
         <button class="btn btn-del" onclick='eliminarProductoLocal("${p.codigo}")'>🗑️</button>` : ''}
       </td>
     `;
-    if(p.categoria==='Antibiótico') tablas['Antibiótico'].appendChild(row);
-    else tablaGeneral.appendChild(row);
+    tablaGeneral.appendChild(row);
+    if(p.categoria==='Antibiótico') tablas['Antibiótico'].appendChild(row.cloneNode(true));
   });
-
   productosProveedores.forEach(p=>{
     const row=document.createElement('tr');
+    const catClass = getCategoriaClass(p.categoria);
     row.innerHTML=`
-      <td>${p.nombre}</td>
-      <td>${p.codigo}</td>
-      <td>${p.categoria}</td>
+      <td>${p.nombre||"ND"}</td>
+      <td>${p.codigo||"ND"}</td>
+      <td class="${catClass}">${p.categoria||"ND"}</td>
       <td>
         ${userType==='admin' ? `<button class="btn btn-edit" onclick='editarProducto(${JSON.stringify(p)})'>✏️</button>
         <button class="btn btn-del" onclick='eliminarProductoLocal("${p.codigo}")'>🗑️</button>` : ''}
@@ -284,43 +247,10 @@ function renderTablasInventario(){
     `;
     tablas['Proveedores'].appendChild(row);
   });
-
   renderInventario();
 }
 
-// ---------------------- Formulario ----------------------
-addForm.addEventListener('submit', e=>{
-  e.preventDefault();
-  const p = {
-    nombre: document.getElementById('nombre').value,
-    codigo: document.getElementById('codigo').value,
-    precio: parseFloat(document.getElementById('precio').value) || 0,
-    lote: document.getElementById('lote').value || null,
-    stock: parseInt(document.getElementById('stock').value) || 0,
-    stockMin: parseInt(document.getElementById('stockMin').value) || 0,
-    entradas: parseInt(document.getElementById('entradas').value) || 0,
-    categoria: document.getElementById('categoria').value,
-    caducidad: document.getElementById('caducidad').value || null,
-  };
-  guardarProductoLocal(p);
-  addForm.reset();
-});
-
-function editarProducto(p){
-  productoEnEdicion=p;
-  document.getElementById('nombre').value=p.nombre;
-  document.getElementById('codigo').value=p.codigo;
-  document.getElementById('precio').value=p.precio;
-  document.getElementById('lote').value=p.lote;
-  document.getElementById('stock').value=p.stock;
-  document.getElementById('stockMin').value=p.stockMin;
-  document.getElementById('entradas').value=p.entradas;
-  document.getElementById('categoria').value=p.categoria;
-  document.getElementById('caducidad').value=p.caducidad;
-  categoriaSelect.dispatchEvent(new Event('change'));
-}
-
-// ---------------------- PDF ----------------------
+// ---------------------- PDF con columnas L-D ----------------------
 function imprimirPDF(tablaId,titulo){
   if(userType!=='admin') return;
   const { jsPDF } = window.jspdf;
@@ -329,31 +259,82 @@ function imprimirPDF(tablaId,titulo){
   const fecha=new Date();
   doc.setFontSize(16); doc.text(titulo,10,10);
   doc.setFontSize(10); doc.text(`Fecha: ${fecha.toLocaleDateString()} Hora: ${fecha.toLocaleTimeString()}`,10,16);
+
+  // Encabezados PDF
   const encabezado=[], datos=[];
-  tabla.querySelectorAll('thead th').forEach(th=>encabezado.push(th.innerText));
+  tabla.querySelectorAll('thead th').forEach(th=>{
+    if(th.innerText!=='Acciones') encabezado.push(th.innerText);
+  });
+  // Agregamos columnas L-D
+  ['L','M','X','J','V','S','D'].forEach(d=>encabezado.push(d));
+
   tabla.querySelectorAll('tbody tr').forEach(tr=>{
     const celdas=tr.querySelectorAll('td');
-    if(celdas.length>1 && !celdas[0].hasAttribute('colspan')) datos.push([...celdas].map(td=>td.innerText));
+    if(celdas.length>1){
+      const fila=[...celdas].slice(0,9).map(td=>td.innerText.trim() || "ND"); // 9 columnas visibles
+      datos.push(fila);
+    }
   });
-  doc.autoTable({head:[encabezado],body:datos,startY:28,theme:'grid',headStyles:{fillColor:[24,119,242],textColor:[255,255,255]},styles:{fontSize:10}});
+
+  doc.autoTable({
+    head:[encabezado],
+    body:datos,
+    startY:28,
+    theme:'grid',
+    headStyles:{fillColor:[24,119,242],textColor:[255,255,255]},
+    styles:{fontSize:10}
+  });
   doc.save(`${titulo}.pdf`);
 }
 
-// ---------------------- Render según usuario ----------------------
-function renderInventario(){
-  if(userType==='cajero'){
-    adminSection.classList.add('oculto');
-    document.querySelectorAll('.btn-pdf').forEach(b=>b.classList.add('oculto'));
-  }else{
+// ---------------------- Resto funciones ----------------------
+function getStockClass(stock, min){if(stock<=min+10) return 'stock-rojo'; if(stock>min+10 && stock<=min+20) return 'stock-amarillo'; return 'stock-verde';}
+function getCaducidadClass(fechaCad){if(!fechaCad) return ''; const hoy=new Date(); const cad=new Date(fechaCad); const diff=(cad-hoy)/(1000*60*60*24); if(diff<=20) return 'cad-rojo'; if(diff>20 && diff<=50) return 'cad-amarillo'; return 'cad-verde';}
+function getCategoriaClass(cat){switch(cat){case 'Farmacia':return 'categoria-farmacia'; case 'Tienda':return 'categoria-tienda'; case 'Antibiótico':return 'categoria-antibiotico'; case 'Papelería':return 'categoria-papeleria'; case 'Proveedores':return 'categoria-proveedores'; default:return '';}}
+
+addForm.addEventListener('submit', e=>{
+    e.preventDefault(); 
+    const p = {
+        nombre: document.getElementById('nombre').value,
+        codigo: document.getElementById('codigo').value,
+        precio: parseFloat(document.getElementById('precio').value)||0,
+        lote: document.getElementById('lote').value,
+        stock: parseInt(document.getElementById('stock').value)||0,
+        stockMin: parseInt(document.getElementById('stockMin').value)||0,
+        entradas: parseInt(document.getElementById('entradas').value)||0,
+        categoria: document.getElementById('categoria').value,
+        caducidad: document.getElementById('caducidad').value||null
+    }; 
+    guardarProductoLocal(p); 
+    addForm.reset(); 
+});
+
+function editarProducto(p){
+    productoEnEdicion=p; 
+    document.getElementById('nombre').value=p.nombre; 
+    document.getElementById('codigo').value=p.codigo; 
+    document.getElementById('precio').value=p.precio; 
+    document.getElementById('lote').value=p.lote; 
+    document.getElementById('stock').value=p.stock; 
+    document.getElementById('stockMin').value=p.stockMin; 
+    document.getElementById('entradas').value=p.entradas; 
+    document.getElementById('categoria').value=p.categoria; 
+    document.getElementById('caducidad').value=p.caducidad; 
     adminSection.classList.remove('oculto');
-    document.querySelectorAll('.btn-pdf').forEach(b=>b.classList.remove('oculto'));
-  }
 }
 
-// Inicializar
-document.addEventListener('DOMContentLoaded', ()=>{
-  renderTablasInventario();
+// ---------------------- Admin/Login ----------------------
+adminBtn.addEventListener('click',()=>{loginSection.classList.toggle('oculto');});
+salirAdmin.addEventListener('click',()=>{adminSection.classList.add('oculto');});
+loginForm.addEventListener('submit',e=>{
+    e.preventDefault(); 
+    const pass=document.getElementById('adminPass').value;
+    if(pass==='admin123'){userType='admin'; loginSection.classList.add('oculto'); adminSection.classList.remove('oculto'); renderTablasInventario();} 
+    else alert('Contraseña incorrecta');
 });
+
+// ---------------------- Inicialización ----------------------
+renderTablasInventario();
 </script>
 </body>
 </html>
