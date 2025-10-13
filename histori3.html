@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>📜 Historial - Farmacia Lili 📜</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:system-ui,sans-serif;
+  background:#66696d;
+  color:#50545e;
+  line-height:1.6;
+  padding-bottom:40px;
+}
+header{
+  background:linear-gradient(90deg,#2563eb,#1e40af);
+  color:white;
+  padding:22px;
+  font-size:24px;
+  font-weight:700;
+  text-align:center;
+  position:relative;
+  box-shadow:0 4px 18px rgba(15,23,42,0.12);
+}
+header img{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  width:120px; height:80px; border-radius:12px; border:2px solid rgba(255,255,255,0.2);
+}
+nav.main-menu{
+  display:flex;align-items:center;gap:12px;
+  background:#eef6ff;padding:10px 16px;border-bottom:1px solid #dbeafe;
+  position:sticky; top:0; z-index:50;
+}
+.main-menu .menu-link{
+  text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:600;color:#0f172a;border:1px solid #2563eb;
+}
+.main-menu .menu-link.active{background:#2563eb; color:white; border-color: #2563eb;}
+#cajero{margin-left:auto;font-weight:700;color:#1e40af;}
+#logout{background:#ef4444;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;}
+main{padding:18px;display:flex;flex-direction:column;gap:18px;max-width:1200px;margin:0 auto;}
+section.card{background:white;padding:14px;border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,0.06);border:1px solid rgba(2,6,23,0.03);}
+h2{color:#1e3a8a;margin-bottom:8px;}
+.table-container{width:100%;overflow:auto;margin-top:8px;border-radius:8px;}
+table{width:100%;border-collapse:collapse;font-size:0.95rem;}
+th,td{padding:8px;border-bottom:1px solid #e6eef8;text-align:left;}
+th{background:#1e40af;color:white;position:sticky;top:0;}
+tfoot td{font-weight:700;background:#f1f8ff;text-align:right;}
+.small-muted{font-size:0.9rem;color:#64748b;}
+.toggle-btn{background:#0ea5e9;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;margin-top:6px;}
+.toggle-btn:hover{opacity:0.95;}
+.hidden{display:none;}
+.modal{display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center;z-index:200;}
+.modal-card{width:520px;background:linear-gradient(180deg,#ffffff,#f0f9ff);border-radius:14px;padding:18px;box-shadow:0 8px 40px rgba(2,6,23,0.3);border:1px solid rgba(30,64,175,0.08);}
+.modal-card h3{margin-bottom:10px;color:#1e40af;text-align:center;}
+.modal-card label{display:flex;justify-content:space-between;align-items:center;margin:6px 0;}
+.modal-card input[type="number"]{width:110px;padding:6px;border-radius:6px;border:1px solid #c7ddff;}
+.modal-card .total-row{margin-top:12px;font-weight:700;color:#0f172a;text-align:right;}
+.btn-primary{background:#16a34a;color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;margin-top:10px;}
+.btn-secondary{background:#ef4444;color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;margin-left:8px;}
+.note{font-size:0.9rem;color:#475569;margin-top:8px;}
+@media (max-width:720px){
+  header img{display:none;}
+  .modal-card{width:92%;}
+  th,td{font-size:0.85rem;padding:6px;}
+}
+</style>
+</head>
+<body>
+<header>
+  <img src="ventas.png" alt="Logo Ventas">
+  📜 Historial -FarmaciaLili 3.0 📜 
+</header>
+
+<nav class="main-menu">
+ <a href="farma3.html" class="menu-link">💳 Ventas</a>
+  <a href="inve3.html" class="menu-link">📦 Inventario</a>
+  <a href="histori3.html" class="menu-link active">📜 Historial</a>
+  <span id="cajero"></span>
+  <button id="logout">Cerrar Sesión</button>
+</nav>
+
+<main>
+  <!-- Ventas Generales -->
+  <section class="card">
+    <h2>💵 Ventas Generales </h2>
+    <div class="small-muted"> <code>ve¡s</code>  <code></code>.</div>
+    <div class="table-container">
+      <table id="tabla-ventas-general">
+        <thead>
+          <tr><th>#</th><th>Producto</th><th>Código</th><th>Cantidad</th><th>Folio</th><th>Fecha</th><th>Cajero</th><th>Método</th><th>Subtotal</th></tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot><tr><td colspan="8">Total General</td><td id="total-general">$0.00</td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- Ventas Antibióticos -->
+  <section class="card">
+    <h2>💊 Ventas Antibióticos</h2>
+    <div class="table-container">
+      <table id="tabla-antibioticos">
+        <thead>
+          <tr>
+            <th>#</th><th>Producto</th><th>Código</th><th>Cantidad</th><th>Folio</th><th>Doctor</th><th>Cédula</th><th>Dirección</th><th>Receta</th><th>Lote</th><th>Fecha</th><th>Cajero</th><th>Método</th><th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr><td colspan="13">Total Antibióticos</td><td id="total-antibioticos">$0.00</td></tr>
+          <tr><td colspan="14" style="text-align:center;">
+            <button class="btn-primary" onclick="abrirModalCorte()">💾 Realizar Corte</button>
+          </td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- Botón desplegable Historial de Cortes -->
+  <section class="card">
+    <button class="toggle-btn" onclick="toggle('historialSection')">📂 Mostrar / Ocultar Historial de Cortes</button>
+    <div id="historialSection" class="hidden" style="margin-top:12px;">
+      <h2>📊 Historial de Cortes</h2>
+      <div class="small-muted" id="histPassDiv">Ingresa contraseña para visualizar el historial.</div>
+      <div style="margin:8px 0;" id="inputPassDiv">
+        <input id="passCorte" type="password" placeholder="🔒 Contraseña" style="padding:8px;border-radius:8px;border:1px solid #c7d2fe;">
+        <button class="toggle-btn" onclick="verHistorial()">Ver Historial</button>
+      </div>
+
+      <div id="contenedorCortes" class="hidden">
+        <button class="toggle-btn" style="margin-bottom:6px;background:#ef4444;" onclick="salirHistorial()">Salir Historial</button>
+        <div class="table-container">
+          <table id="tablaCortes">
+            <thead>
+              <tr><th>Fecha</th><th>Cajero</th><th>Efectivo</th><th>Tarjeta</th><th>Transferencia</th><th>Proveedor</th><th>Total Neto</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Botón desplegable Ventas de Corte -->
+  <section class="card">
+    <button class="toggle-btn" onclick="toggle('ventasCorteSection')">🧾 Mostrar / Ocultar Ventas de Corte</button>
+    <div id="ventasCorteSection" class="hidden" style="margin-top:12px;">
+      <h2>🧾 Ventas de Corte (detalle por producto)</h2>
+      <div class="table-container">
+        <table id="tablaVentasCorte">
+          <thead>
+            <tr>
+              <th>#</th><th>Producto</th><th>Código</th><th>Cantidad</th><th>Folio</th><th>Doctor</th><th>Cédula</th><th>Dirección</th><th>Receta</th><th>Lote</th><th>Fecha</th><th>Cajero</th><th>Método</th><th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Modal Corte -->
+<div class="modal" id="modalCorte">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">💵 Panel de Corte</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+      <label>💵 1000: <input class="billete" data-valor="1000" type="number" value="0"></label>
+      <label>💵 500:  <input class="billete" data-valor="500" type="number" value="0"></label>
+      <label>💵 200:  <input class="billete" data-valor="200" type="number" value="0"></label>
+      <label>💵 100:  <input class="billete" data-valor="100" type="number" value="0"></label>
+      <label>💵 50:   <input class="billete" data-valor="50" type="number" value="0"></label>
+      <label>💵 20:   <input class="billete" data-valor="20" type="number" value="0"></label>
+      <label>🪙 10:   <input class="billete" data-valor="10" type="number" value="0"></label>
+      <label>🪙 5:    <input class="billete" data-valor="5" type="number" value="0"></label>
+      <label>🪙 2:    <input class="billete" data-valor="2" type="number" value="0"></label>
+      <label>🪙 1:    <input class="billete" data-valor="1" type="number" value="0"></label>
+      <label>🪙 0.50: <input class="billete" data-valor="0.5" type="number" value="0"></label>
+    </div>
+
+    <div class="total-row">Total Efectivo: <span id="totalEfectivo">0</span></div>
+    <label style="margin-top:8px;">Tarjeta: <input id="totalTarjeta" type="number" value="0"></label>
+    <label>Transferencia: <input id="totalTransferencia" type="number" value="0"></label>
+    <label>Proveedor: <input id="totalProveedor" type="number" value="0" readonly></label>
+    <div class="total-row">Total General: <span id="totalGeneralCorte">0</span></div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+      <button class="btn-primary" onclick="finalizarCorte()">✅ Finalizar Corte</button>
+      <button class="btn-secondary" onclick="cerrarModalCorte()">❌ Cerrar</button>
+    </div>
+    <div class="note">Nota: Al finalizar el corte, todas las ventas locales se moverán a "Ventas de Corte" y ventas actuales se vaciarán.</div>
+  </div>
+</div>
+
+<script>
+let usuarioActivo = localStorage.getItem("usuarioActivo");
+if(!usuarioActivo){}
+else{ document.getElementById("cajero").textContent = "👤 Cajero: " + usuarioActivo; }
+
+function parseJSON(key){ try{ return JSON.parse(localStorage.getItem(key)||"[]"); }catch(e){ return []; } }
+function setJSON(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+function formatDinero(n){ return "$" + (Number(n||0)).toFixed(2); }
+
+function cargarVentasSincronizadas(){
+  const v1 = parseJSON('ventas');
+  const v2 = parseJSON('ventasFarma1');
+  return [...v1, ...v2];
+}
+
+function renderVentas(){
+  const ventas = cargarVentasSincronizadas();
+  const tbodyG = document.querySelector("#tabla-ventas-general tbody");
+  const tbodyA = document.querySelector("#tabla-antibioticos tbody");
+  tbodyG.innerHTML = ""; tbodyA.innerHTML = "";
+  let totalG = 0, totalA = 0;
+  let idxG = 1, idxA = 1;
+  ventas.forEach(v=>{
+    (v.items||[]).forEach(item=>{
+      const subtotal = (Number(item.precio) || 0) * (Number(item.cantidad) || 0);
+      const trG = document.createElement('tr');
+      trG.innerHTML = `<td>${idxG++}</td>
+        <td>${item.nombre||'-'}</td>
+        <td>${item.codigo||'-'}</td>
+        <td>${item.cantidad||0}</td>
+        <td>${v.folio||'-'}</td>
+        <td>${v.fecha||'-'}</td>
+        <td>${v.cajero||'-'}</td>
+        <td>${v.metodo||'-'}</td>
+        <td>${formatDinero(subtotal)}</td>`;
+      tbodyG.appendChild(trG);
+      totalG += subtotal;
+
+      const codigoStr = String(item.codigo || '').toUpperCase();
+      if(codigoStr.startsWith('A')){
+        const trA = document.createElement('tr');
+        trA.innerHTML = `<td>${idxA++}</td>
+          <td>${item.nombre||'-'}</td>
+          <td>${item.codigo||'-'}</td>
+          <td>${item.cantidad||0}</td>
+          <td>${v.folio||'-'}</td>
+          <td>${v.doctor?.nombre||'-'}</td>
+          <td>${v.doctor?.cedula||'-'}</td>
+          <td>${v.doctor?.direccion||'-'}</td>
+          <td>${v.doctor?.folioReceta||'-'}</td>
+          <td>${item.lote||'-'}</td>
+          <td>${v.fecha||'-'}</td>
+          <td>${v.cajero||'-'}</td>
+          <td>${v.metodo||'-'}</td>
+          <td>${formatDinero(subtotal)}</td>`;
+        tbodyA.appendChild(trA);
+        totalA += subtotal;
+      }
+    });
+  });
+
+  document.getElementById('total-general').textContent = formatDinero(totalG);
+  document.getElementById('total-antibioticos').textContent = formatDinero(totalA);
+}
+
+function renderCortes(){
+  const cortes = parseJSON('cortes');
+  const tbody = document.querySelector("#tablaCortes tbody");
+  tbody.innerHTML = "";
+  cortes.forEach(c=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.fecha}</td><td>${c.cajero||'-'}</td><td>${formatDinero(c.efectivo)}</td><td>${formatDinero(c.tarjeta)}</td><td>${formatDinero(c.transferencia)}</td><td>${formatDinero(c.proveedor)}</td><td>${formatDinero(c.total)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderVentasCorte(){
+  const ventasCorte = parseJSON('ventasCorte');
+  const tbody = document.querySelector("#tablaVentasCorte tbody");
+  tbody.innerHTML = "";
+  let idx = 1;
+  ventasCorte.forEach(v=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${idx++}</td>
+      <td>${v.producto||'-'}</td>
+      <td>${v.codigo||'-'}</td>
+      <td>${v.cantidad||0}</td>
+      <td>${v.folio||'-'}</td>
+      <td>${v.doctor||'-'}</td>
+      <td>${v.cedula||'-'}</td>
+      <td>${v.direccion||'-'}</td>
+      <td>${v.receta||'-'}</td>
+      <td>${v.lote||'-'}</td>
+      <td>${v.fecha||'-'}</td>
+      <td>${v.cajero||'-'}</td>
+      <td>${v.metodo||'-'}</td>
+      <td>${formatDinero(v.subtotal)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function toggle(id){document.getElementById(id).classList.toggle('hidden');}
+
+// ---------- Historial con contraseña ----------
+let historialActivo = false;
+const CONTRASENA_HISTORIAL = "1234"; // contraseña fija temporal, puedes ajustar
+
+function verHistorial(){
+  const pass = document.getElementById('passCorte').value;
+  if(pass === CONTRASENA_HISTORIAL){
+    historialActivo = true;
+    document.getElementById('inputPassDiv').classList.add('hidden');
+    document.getElementById('contenedorCortes').classList.remove('hidden');
+    document.getElementById('histPassDiv').textContent = "🔓 Historial desbloqueado";
+    document.getElementById('passCorte').value = "";
+    renderCortes();
+  } else { alert("🔒 Contraseña incorrecta"); }
+}
+
+function salirHistorial(){
+  historialActivo = false;
+  document.getElementById('contenedorCortes').classList.add('hidden');
+  document.getElementById('inputPassDiv').classList.remove('hidden');
+  document.getElementById('histPassDiv').textContent = "Ingresa contraseña para visualizar el historial.";
+  document.getElementById('passCorte').value = "";
+}
+
+// ---------- Modal Corte ----------
+function abrirModalCorte(){document.getElementById('modalCorte').style.display='flex';}
+function cerrarModalCorte(){document.getElementById('modalCorte').style.display='none';}
+
+function finalizarCorte(){
+  const billetes = document.querySelectorAll('.billete');
+  let totalE = 0;
+  billetes.forEach(b=>totalE+=Number(b.value||0)*Number(b.dataset.valor||0));
+  const tarjeta = Number(document.getElementById('totalTarjeta').value||0);
+  const transferencia = Number(document.getElementById('totalTransferencia').value||0);
+  const proveedor = 0;
+  const totalGeneral = totalE + tarjeta + transferencia + proveedor;
+
+  const cortes = parseJSON('cortes');
+  cortes.push({fecha:new Date().toLocaleString(), cajero:usuarioActivo, efectivo:totalE, tarjeta, transferencia, proveedor, total:totalGeneral});
+  setJSON('cortes', cortes);
+
+  const ventas = cargarVentasSincronizadas();
+  const ventasCorte = parseJSON('ventasCorte');
+  ventas.forEach(v=>ventasCorte.push(...v.items.map(it=>({producto:it.nombre,codigo:it.codigo,cantidad:it.cantidad,folio:v.folio,doctor:v.doctor?.nombre,cedula:v.doctor?.cedula,direccion:v.doctor?.direccion,receta:v.doctor?.folioReceta,lote:it.lote,fecha:v.fecha,cajero:v.cajero,metodo:v.metodo,subtotal:it.cantidad*it.precio}))));
+  setJSON('ventasCorte', ventasCorte);
+
+  localStorage.setItem('ventas', JSON.stringify([]));
+  localStorage.setItem('ventasFarma1', JSON.stringify([]));
+
+  cerrarModalCorte();
+  renderVentas();
+  renderCortes();
+  renderVentasCorte();
+}
+
+// ---------- Inicialización ----------
+renderVentas();
+renderVentasCorte();
+</script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💳 Ventas - FarmaciaLili 3.0 💳</title>
+<style>
+body {
+  background: #919496;
+  color: #1f2937;
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 1.15rem;
+  overflow: hidden;
+}
+header {
+ background: #2563eb;
+  color: white;
+  padding: 30px;
+  font-size: 26px;
+  font-weight: bold;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+header img {position:absolute; left:10px; top:50%; transform:translateY(-50%); width:150px; height:100px; border-radius:25px; border: 2px solid #e5e7eb;}
+nav.main-menu {
+  display:flex; align-items:center; gap:12px;
+  background:#e0f0ff;
+  padding:12px 16px;
+  position:sticky; top:0; z-index:1000;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+}
+.main-menu .menu-link {
+  text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:500;
+  color:#1f2937; transition:0.2s; border:1px solid #2563eb;
+}
+.main-menu .menu-link:hover { background:#2563eb; color:white; }
+.main-menu .menu-link.active { background:#2563eb; color:white; border-color: #2563eb;}
+#cajero { margin-left:auto; font-weight:bold; color:#2563eb; }
+#logout {
+  background:#dc2626; color:#fff; border:none; border-radius:8px;
+  padding:8px 12px; margin-left:12px; cursor:pointer; font-weight:bold; transition:0.2s;
+}
+#logout:hover { background:#b91c1c; }
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  overflow: hidden;
+}
+
+#ventaCard {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#searchProducto {
+  margin-bottom: 5px;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.tabla-contenedor {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid #4f5256;
+  border-radius: 12px;
+  background: #9ea6ad;
+  max-height: 55vh;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  table-layout: fixed;
+}
+th, td {
+  padding:2px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  word-wrap: break-word;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: #2563eb;
+  color: white;
+  z-index: 10;
+}
+
+.status-ok { background: #03e521; }
+.status-proximo { background: #f6ff00; }
+.status-caducado { background: #ff0000d8; }
+
+input, select, button {padding:8px; border-radius:6px; border:1px solid #2563eb; margin:4px 0; }
+input[readonly] { background:#f3f4f6; color:#6b7280; }
+button { cursor:pointer; font-weight:bold; transition:0.2s; }
+#btnCobrar { margin-top: 6px; background-color: rgb(64,255,0); }
+#btnReembolso { margin-top: 6px; background-color: red; color:white; }
+
+#clienteForm, #folioProveedorDiv {
+  display:none; flex-wrap:wrap; gap:4px; margin-top:5px;
+}
+#clienteForm input, #folioProveedorDiv input { flex:1; }
+
+#panelReembolso {
+  position:fixed; top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.6);
+  display:none; justify-content:center; align-items:center;
+  z-index:2000;
+}
+#panelReembolso .contenido {
+  background:#fff; padding:1px; border-radius:16px;
+  width:420px; display:flex; flex-direction:column; gap:12px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s ease-in-out;
+}
+#panelReembolso h3 { margin:0; color:#2563eb; text-align:center; }
+#panelReembolso button { padding:1px; border-radius:8px; font-weight:bold; cursor:pointer; }
+#btnFinalizar { background:red; color:white; }
+#btnCancelar { background:yellow; color:black; }
+@keyframes fadeIn { from{opacity:0;transform:scale(0.9);} to{opacity:1;transform:scale(1);} }
+</style>
+</head>
+<body>
+<header>
+  <img src="ventas.png" alt="Logo Ventas">
+  💳 Ventas - FarmaciaLili 3.0 💳
+</header>
+
+<nav class="main-menu">
+ <a href="farma3.html" class="menu-link active">💳 Ventas</a>
+  <a href="inve3.html" class="menu-link">📦 Inventario</a>
+  <a href="histori3.html" class="menu-link ">📜 Historial</a>
+  <span id="cajero"></span>
+  <button id="logout">Cerrar Sesión</button>
+</nav>
+
+<main>
+  <div id="ventaCard">
+    <input type="text" id="searchProducto" placeholder="Escanea o escribe código/nombre">
+    <div class="tabla-contenedor">
+      <table id="tablaVenta">
+        <thead>
+          <tr>
+            <th>Producto</th><th>Código</th><th>Cant.</th><th>Precio</th>
+            <th>Subtotal</th><th>Caducidad</th><th>Lote</th><th>Status</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <p id="totalVenta">Total: $0.00</p>
+
+    <div id="clienteForm">
+      <input type="text" id="clienteNombre" placeholder="Nombre del Doctor">
+      <input type="text" id="clienteCedula" placeholder="Cédula profesional" maxlength="8">
+      <input type="text" id="clienteDireccion" placeholder="Dirección">
+      <input type="text" id="folioReceta" placeholder="Folio de receta" maxlength="8">
+    </div>
+
+    <div id="folioProveedorDiv">
+      <input type="text" id="folioProveedor" placeholder="Folio del proveedor">
+      <input type="number" id="montoProveedor" placeholder="Monto a pagar" min="0" step="0.01">
+    </div>
+
+    <div id="pagoForm">
+      <input type="number" id="pagoInput" placeholder="Pago recibido" min="0">
+      <input type="text" id="cambioDisplay" placeholder="Cambio" readonly>
+      <select id="metodoPago">
+        <option value="Efectivo">Efectivo</option>
+        <option value="Tarjeta">Tarjeta</option>
+        <option value="Transferencia">Transferencia</option>
+        <option value="Proveedores">Proveedores</option>
+      </select>
+    </div>
+
+    <button id="btnCobrar">Cobrar</button>
+    <button id="btnReembolso">Reembolso</button>
+  </div>
+</main>
+
+<div id="panelReembolso">
+  <div class="contenido">
+    <h3> Reembolso</h3>
+    <input type="text" id="folioVentaInput" placeholder="Folio de la venta">
+    <input type="text" id="codigoProductoInput" placeholder="Código(s) del producto, separados por coma">
+    <input type="password" id="adminPass" placeholder="Contraseña de admin">
+    <button id="btnFinalizar">Finalizar</button>
+    <button id="btnCancelar">Cancelar</button>
+  </div>
+</div>
+
+<script>
+let usuarioActivo = localStorage.getItem("usuarioActivo");
+if(!usuarioActivo){ window.location.href="index.html"; }
+else { document.getElementById("cajero").textContent = "👤 Cajero: "+usuarioActivo; }
+
+let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
+let venta = JSON.parse(localStorage.getItem('ventaActiva')) || [];
+let folioCounter = parseInt(localStorage.getItem('folioCounter')||1);
+
+function guardarVentaActiva(){ localStorage.setItem('ventaActiva', JSON.stringify(venta)); }
+function guardarInventario(){ localStorage.setItem('inventario', JSON.stringify(inventario)); }
+function guardarHistorial(ventaData){ 
+  const historial = JSON.parse(localStorage.getItem('ventas'))||[];
+  historial.push(ventaData);
+  localStorage.setItem('ventas', JSON.stringify(historial));
+}
+
+function renderVenta(){
+  const tbody = document.querySelector('#tablaVenta tbody');
+  tbody.innerHTML='';
+  const metodo = document.getElementById("metodoPago").value;
+  let total=0;
+  let requiereAntibiotico = venta.some(v=>v.codigo.toUpperCase().startsWith("A"));
+  document.getElementById("clienteForm").style.display=requiereAntibiotico?"flex":"none";
+  document.getElementById("folioProveedorDiv").style.display= metodo==="Proveedores"?"flex":"none";
+
+  venta.forEach((v,index)=>{
+    if(metodo==="Proveedores"){
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${v.nombre}</td><td>${v.codigo}</td><td colspan="7" style="text-align:center;">--</td>`;
+      tbody.appendChild(tr);
+    } else {
+      let subtotal=v.precio*v.cantidad;
+      total+=subtotal;
+      const diff=(new Date(v.caducidad)-new Date())/(1000*60*60*24);
+      let estatus="OK", clase="status-ok";
+      if(v.codigo.toUpperCase().startsWith("A")){
+        if(diff<0){ estatus="Caducado"; clase="status-caducado"; }
+        else if(diff<=30){ estatus="Próximo"; clase="status-proximo"; }
+      }
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td>${v.nombre}</td><td>${v.codigo}</td><td>${v.cantidad}</td>
+        <td style="background:#0fcf2c;color:white;">${v.precio.toFixed(2)}</td>
+        <td>${subtotal.toFixed(2)}</td>
+        <td>${v.codigo.toUpperCase().startsWith("A")?v.caducidad:''}</td>
+        <td>${v.codigo.toUpperCase().startsWith("A")?v.lote:''}</td>
+        <td class="${clase}">${estatus}</td>
+        <td><button class="btnEliminar" data-index="${index}">🗑</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+  });
+
+  document.querySelectorAll('.btnEliminar').forEach(btn=>{
+    btn.onclick=()=>{ venta.splice(parseInt(btn.dataset.index),1); renderVenta(); actualizarCambio(); };
+  });
+
+  if(metodo!=="Proveedores"){
+    document.getElementById('totalVenta').textContent="Total: $"+total.toFixed(2);
+  } else {
+    const montoProv=parseFloat(document.getElementById("montoProveedor").value)||0;
+    document.getElementById('totalVenta').textContent="Monto a pagar: $"+montoProv.toFixed(2);
+  }
+
+  guardarVentaActiva();
+}
+
+document.getElementById('searchProducto').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const busqueda=e.target.value.trim().toLowerCase();
+    if(!busqueda) return;
+    const prod=inventario.find(p=>p.codigo.toLowerCase()===busqueda || p.nombre.toLowerCase()===busqueda);
+    if(!prod) return alert("Producto no encontrado");
+    if(document.getElementById("metodoPago").value!=="Proveedores" && prod.stock<=0)
+      return alert("Producto sin stock");
+    const existe=venta.find(v=>v.codigo===prod.codigo);
+    if(existe){ 
+      if(document.getElementById("metodoPago").value!=="Proveedores" && existe.cantidad+1>prod.stock)
+        return alert("No hay suficiente stock");
+      existe.cantidad++; 
+    } else venta.push({...prod,cantidad:1});
+    e.target.value=''; renderVenta(); actualizarCambio();
+  }
+});
+
+function actualizarCambio(){
+  const metodo = document.getElementById("metodoPago").value;
+  if(metodo==="Proveedores") return;
+  const total=venta.reduce((acc,v)=>acc+v.precio*v.cantidad,0);
+  const pago=parseFloat(document.getElementById('pagoInput').value)||0;
+  document.getElementById('cambioDisplay').value=pago>=total?(pago-total).toFixed(2):"0.00";
+}
+document.getElementById('pagoInput').addEventListener('input', actualizarCambio);
+
+function imprimirTicket(ventaData){
+  const ventana=window.open("","Ticket","width=400,height=600");
+  const fecha=new Date(ventaData.fecha);
+  let metodo = document.getElementById("metodoPago").value;
+  let html=`<html><head><title>Ticket</title>
+  <style>body{font-family:monospace; font-size:5px; text-align:center;} h2{margin:1px 0;} table{width:100%; border-collapse:collapse;} td,th{text-align:left; font-size:6px;} .total{font-weight:bold; border-top:1px dashed #000; margin-top:2px;}</style></head><body>
+  <h2>💊 Farmacia Ortopedia Lili 💊</h2>
+  <p>Dirección: Calle Salud #123, Ciudad</p>
+  <p>Tel: 555-123-4567</p>  <hr>
+  <p><strong>Folio:</strong> ${ventaData.folio}</p>
+  <p><strong>Fecha:</strong> ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}</p>
+  <p><strong>Cajero:</strong> ${ventaData.cajero}</p>
+  <hr>
+  <table>
+  <tr><th>Producto/Proveedor</th><th>Cód</th><th>Cant</th><th>Precio</th></tr>`;
+
+  if(metodo==="Proveedores"){
+    ventaData.productos.forEach(p=>{
+      html+=`<tr><td>${p.nombre}</td><td>${p.codigo}</td><td>--</td><td>--</td></tr>`;
+    });
+    html+=`</table><hr>
+      <p><strong>Folio Proveedor:</strong> ${document.getElementById("folioProveedor").value||''}</p>
+      <p><strong>Monto a pagar:</strong> $${parseFloat(document.getElementById("montoProveedor").value||0).toFixed(2)}</p>`;
+  } else {
+    ventaData.productos.forEach(p=>{
+      html+=`<tr><td>${p.nombre}</td><td>${p.codigo}</td><td>${p.cantidad}</td><td>${p.precio.toFixed(2)}</td></tr>`;
+    });
+    html+=`</table><hr><p class="total">TOTAL: $${ventaData.total.toFixed(2)}</p>`;
+    const antibiotico=ventaData.productos.some(p=>p.codigo.toUpperCase().startsWith("A"));
+    if(antibiotico){
+      html+=`<hr><p><strong>Receta Médica</strong></p>
+      <p>Doctor: ${document.getElementById("clienteNombre").value||''}</p>
+      <p>Cédula: ${document.getElementById("clienteCedula").value||''}</p>
+      <p>Dirección: ${document.getElementById("clienteDireccion").value||''}</p>
+      <p>Folio Receta: ${document.getElementById("folioReceta").value||''}</p>`;
+    }
+  }
+
+  html+=`<hr><p>Gracias por su compra 🩺</p></body></html>`;
+  ventana.document.write(html);
+  ventana.print();
+  ventana.close();
+}
+
+// 💰 Cobrar
+document.getElementById("btnCobrar").onclick=()=>{
+  if(venta.length===0) return alert("No hay productos en la venta");
+  const metodo = document.getElementById("metodoPago").value;
+  let total=0;
+  if(metodo==="Proveedores"){
+    total = parseFloat(document.getElementById("montoProveedor").value)||0;
+  } else {
+    total = venta.reduce((a,v)=>a+v.precio*v.cantidad,0);
+  }
+
+  const ventaData={folio: folioCounter++, cajero: usuarioActivo, fecha:new Date().toLocaleString(), productos: venta, total: total};
+
+  guardarHistorial(ventaData);
+  localStorage.setItem('folioCounter',folioCounter);
+  imprimirTicket(ventaData);
+  venta=[]; renderVenta();
+  document.getElementById('pagoInput').value='';
+  document.getElementById('montoProveedor').value='';
+  document.getElementById('folioProveedor').value='';
+  actualizarCambio();
+  alert("✅ Venta cobrada e impresa correctamente.");
+};
+
+document.getElementById("logout").onclick=()=>{ localStorage.removeItem("usuarioActivo"); window.location.href="index.html"; };
+
+const panel=document.getElementById("panelReembolso");
+document.getElementById("btnReembolso").onclick=()=>{ panel.style.display="flex"; };
+document.getElementById("btnCancelar").onclick=()=>{ panel.style.display="none"; };
+
+// Panel de reembolso con contraseña fija
+document.getElementById("btnFinalizar").onclick = () => {
+  const folio = document.getElementById("folioVentaInput").value.trim();
+  const codigos = document.getElementById("codigoProductoInput").value.trim().split(",").map(c => c.trim());
+  const pass = document.getElementById("adminPass").value;
+
+  const CONTRASENA_FIJA = "Mariposa2025";
+
+  if (pass !== CONTRASENA_FIJA) return alert("❌ Contraseña incorrecta");
+  if (!folio || codigos.length === 0) return alert("❌ Debes ingresar folio y al menos un código");
+
+  const historial = JSON.parse(localStorage.getItem('ventas')) || [];
+  const ventaReemb = historial.find(v => v.folio == folio);
+  if (!ventaReemb) return alert("❌ Folio no encontrado");
+
+  codigos.forEach(codigo => {
+    const prodVenta = ventaReemb.productos.find(p => p.codigo === codigo);
+    if (prodVenta) {
+      const invIndex = inventario.findIndex(p => p.codigo === codigo);
+      if (invIndex >= 0) inventario[invIndex].stock += prodVenta.cantidad;
+    }
+  });
+
+  guardarInventario();
+  alert(`✅ Reembolso realizado para folio ${folio} y productos: ${codigos.join(", ")}`);
+  panel.style.display = "none";
+};
+
+// Actualiza la tabla al cambiar método de pago
+document.getElementById("metodoPago").addEventListener('change', renderVenta);
+document.getElementById("montoProveedor").addEventListener('input', renderVenta);
+
+renderVenta();
+</script>
+</body>
+</html>

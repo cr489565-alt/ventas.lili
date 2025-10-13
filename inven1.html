@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📦 Inventario - Farmacia Lili Óptica (IndexedDB)</title>
+
+<!-- Librerías externas (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+/* --- estilos (adaptados de tu versión original) --- */
+* { box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; background:#f9fafb; color:#1f2937; margin:0; padding:0; }
+header { background:#2563eb; color: white; padding: 30px; font-size: 26px; font-weight: bold; text-align: center; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+header img { position:absolute; left:10px; top:50%; transform:translateY(-50%); width:150px; height:100px; border-radius:25px; border: 2px solid #e5e7eb; }
+main { padding:16px; display:flex; flex-direction:column; gap:16px; }
+.main-menu { display:flex; gap:12px; background:#ffffff; padding:10px 16px; position:sticky; top:0; z-index:1000; border-bottom:1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.main-menu .menu-link { color:#1f2937; text-decoration:none; padding:8px 12px; border-radius:8px; font-weight:500; transition:0.2s; border: 1px solid #e5e7eb; }
+.main-menu .menu-link:hover { background:#e5e7eb; color:#111827; }
+.main-menu .menu-link.active { background:#2563eb; color:white; border-color: #2563eb; }
+#searchBar { margin-left:10px; padding:8px; border-radius:6px; border:1px solid #d1d5db; width:200px; background: #f9fafb; flex-grow: 1; max-width: 300px; }
+.menu-container { position: relative; display:inline-block; margin-left:auto; }
+.menu-button { font-size: 18px; cursor: pointer; color: white; border: none; background: #26a9dc; padding: 8px 12px; border-radius:8px; }
+.dropdown-menu { display:none; position:absolute; right:0; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.2); border-radius:6px; min-width:220px; z-index:10; }
+.dropdown-menu a { color:#333; padding:10px 15px; text-decoration:none; display:block; }
+.dropdown-menu a:hover { background:#f1f1f1; }
+
+.section { text-align:center; width:95%; background:linear-gradient(120deg,#ffffff 80%,#dbeafe 100%); padding:24px; border-radius:15px; box-shadow:0 8px 28px rgba(0,0,0,.1); margin:12px auto; border: 1px solid #000000; }
+h2.seccion { display:flex; justify-content:space-between; align-items:center; margin-top:0; color:#000000; background:#067be8; padding:10px; border-radius:8px; }
+table { width:100%; border-collapse:collapse; margin-top:12px; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+th, td { padding:12px; border:1px solid #000000; text-align:left; font-size:14px; white-space:nowrap; max-width:150px; overflow:hidden; text-overflow:ellipsis; }
+th { background:#f3f4f6; color:#111827; font-weight:600; }
+tr:nth-child(even) { background-color:#f9fafb; }
+tr:hover { background-color:#f3f4f6; }
+
+.btn { padding:.4rem 1rem; border:none; border-radius:8px; cursor:pointer; font-weight:500; transition:0.2s; }
+.btn-edit { background:#2563eb; color:#fff; } .btn-edit:hover { background:#1e40af; }
+.btn-del { background:#dc2626; color:#fff; } .btn-del:hover { background:#991b1b; }
+.btn-pdf { background:#facc15; color:#000; } .btn-pdf:hover { background:#eab308; }
+
+.oculto { display:none; }
+.upload-container { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; background-color:#f0f9ff; border-radius:8px; margin-bottom:20px; }
+.progress-container { width:100%; background:#e5e7eb; border-radius:4px; margin-top:15px; overflow:hidden; }
+.progress-bar { height:20px; background:#2563eb; width:0%; transition:width 0.3s; }
+.status-message { margin-top:10px; padding:8px; border-radius:4px; text-align:center; display:none; }
+.status-success { background:#d1fae5; color:#065f46; }
+.status-error { background:#fee2e2; color:#991b1b; }
+
+/* small helpers */
+.numeracion { width:40px; text-align:center; font-weight:bold; color:#2563eb; }
+.precio-verde { background:#16a34a; color:white; padding:6px; border-radius:6px; display:inline-block; }
+.stock-verde{background:#16a34a;color:#fff;padding:6px;border-radius:6px}
+.stock-amarillo{background:#eab308;color:#000;padding:6px;border-radius:6px}
+.stock-rojo{background:#b91c1c;color:#fff;padding:6px;border-radius:6px}
+.stockmin-rojo{background:#f6ff00;color:#000;padding:6px;border-radius:6px}
+.entradas-azul{background:#2563eb;color:#fff;padding:6px;border-radius:6px}
+.categoria-farmacia{background:#9d4edd;color:#fff;padding:6px;border-radius:6px}
+.categoria-tienda{background:#7c3e12;color:#fff;padding:6px;border-radius:6px}
+.categoria-antibiotico{background:#f97316;color:#fff;padding:6px;border-radius:6px}
+.categoria-papeleria{background:#ec4899;color:#fff;padding:6px;border-radius:6px}
+.categoria-proveedores{background:#f59e0b;color:#fff;padding:6px;border-radius:6px}
+.categoria-bebes{background:#22d3ee;color:#000;padding:6px;border-radius:6px}
+.categoria-tecnologia{background:#6366f1;color:#fff;padding:6px;border-radius:6px}
+.categoria-accesorios{background:#f43f5e;color:#fff;padding:6px;border-radius:6px}
+
+.db-section { background:#f0f9ff; border:2px solid #2563eb; padding:16px; border-radius:12px; margin:16px auto; width:95%; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+.db-stats { display:flex; justify-content:space-around; flex-wrap:wrap; margin-top:10px; }
+.db-stat { background:white; padding:10px; border-radius:8px; margin:5px; min-width:120px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+.db-stat-value { font-size:24px; font-weight:bold; color:#2563eb; }
+.db-stat-label { font-size:14px; color:#6b7280; }
+
+.download-form { background:#ffffff; border:2px solid #2563eb; padding:16px; border-radius:12px; margin:16px auto; width:95%; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+</style>
+</head>
+<body>
+<header>
+  <img src="ventas.png" alt="Logo Ventas">
+  📦 Inventario - FarmaciaLili 2.0 (IndexedDB)
+</header>
+
+<nav class="main-menu">
+  <a href="farma1.html" class="menu-link">💳 Ventas</a>
+  <a href="inven1.html" class="menu-link active">📦 Inventario</a>
+  <a href="hitori1.html" class="menu-link">📜 Historial</a>
+  <input id="searchBar" placeholder="🔎 Buscar por nombre o código...">
+  <div class="menu-container">
+    <span id="cajero" style="margin-left:auto; font-weight:500; color:#000000;"></span>
+    <button class="menu-button">|||</button>
+    <div class="dropdown-menu" id="dropdownMenu">
+      <a href="#" id="abrirAdminBtn">🧑‍💼 Panel Admin</a>
+      <a href="#" onclick="document.getElementById('fileInput').click()">📥 Subir Inventario</a>
+      <a href="#" id="eliminarInventarioBtn">🗑️ Eliminar Inventario</a>
+      <a href="#" id="agregarEntradaBtn">📦 Entradas</a>
+      <a href="#" id="descargarCatBtn">📥 Descargar por Categoría</a>
+      <a href="#" id="descargarPdfCatBtn">📄 Descargar PDF por Categoría</a>
+      <a href="#" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
+    </div>
+  </div>
+</nav>
+
+<section id="loginSection" class="oculto section">
+  <h2>👑 PANEL ADMINISTRACIÓN 👑</h2>
+  🔐 Ingresa Contraseña
+  <form id="loginForm">
+    <input type="password" id="adminPass" placeholder="Contraseña" required>
+    <button type="submit" class="btn btn-edit">Ingresar</button>
+  </form>
+</section>
+
+<section id="adminSection" class="oculto panel-admin section">
+  <h2>⚙️ Panel Administrador</h2>
+  <form id="addForm" style="margin-top:1rem;">
+    <h3>➕ Agregar / Editar Producto</h3>
+    <input type="text" id="nombre" placeholder="Nombre" required>
+    <input type="text" id="codigo" placeholder="Código" required>
+    <input type="number" id="precio" placeholder="Precio">
+    <div id="loteCadFields" class="oculto">
+      <input type="text" id="lote" placeholder="Lote (solo antibióticos)">
+      <input type="date" id="caducidad" placeholder="Caducidad (solo antibióticos)">
+    </div>
+    <input type="number" id="stock" placeholder="Stock">
+    <input type="number" id="stockMin" placeholder="Stock Mínimo">
+    <input type="number" id="entradas" placeholder="Entradas">
+    <select id="categoria" required>
+      <option value="Antibiótico">Antibiótico</option>
+      <option value="Papelería">Papelería</option>
+      <option value="Tienda">Tienda</option>
+      <option value="Farmacia">Farmacia</option>
+      <option value="Proveedores">Proveedores</option>
+      <option value="Bebés">Bebés</option>
+      <option value="Tecnología">Tecnología</option>
+      <option value="Accesorios">Accesorios</option>
+    </select>
+    <div style="margin-top:10px;">
+      <button type="submit" class="btn btn-edit">Guardar</button>
+      <button type="button" id="salirAdmin" class="btn btn-del">Salir</button>
+    </div>
+  </form>
+</section>
+
+<div id="uploadContainer" class="upload-container oculto">
+  <h3>Subiendo archivo de inventario...</h3>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div id="statusMessage" class="status-message"></div>
+</div>
+
+<div class="db-section">
+  <h3>📊 Base de Datos del Inventario</h3>
+  <div class="db-stats">
+    <div class="db-stat">
+      <div class="db-stat-value" id="totalProductos">0</div>
+      <div class="db-stat-label">Productos</div>
+    </div>
+    <div class="db-stat">
+      <div class="db-stat-value" id="totalStock">0</div>
+      <div class="db-stat-label">Stock Total</div>
+    </div>
+    <div class="db-stat">
+      <div class="db-stat-value" id="categorias">0</div>
+      <div class="db-stat-label">Categorías</div>
+    </div>
+    <div class="db-stat">
+      <div class="db-stat-value" id="bajoStock">0</div>
+      <div class="db-stat-label">Bajo Stock</div>
+    </div>
+  </div>
+</div>
+
+<section id="generalSection" class="section">
+  <h2 class="seccion">📦 Inventario - General</h2>
+  <table id="tablaGeneralCompleta">
+    <thead>
+      <tr>
+        <th class="numeracion">#</th>
+        <th>Código</th>
+        <th>Descripción</th>
+        <th class="precio-verde">Precio</th>
+        <th>Lote</th>
+        <th>Stock</th>
+        <th>Mínimo</th>
+        <th>Entradas</th>
+        <th>Categoría</th>
+        <th>Caducidad</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section id="AntibioticosSection" class="section">
+  <h2 class="seccion">💊 Antibióticos</h2>
+  <table id="tablaAntibioticos">
+    <thead>
+      <tr>
+        <th class="numeracion">#</th>
+        <th>Nombre</th><th>Código</th> <th class="precio-verde">Precio</th><th>Lote</th>
+        <th>Stock</th><th>Mínimo</th><th>Entradas</th>
+        <th>Categoría</th><th>Caducidad</th><th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section id="proveedoresSection" class="section">
+  <h2 class="seccion">🏢 Proveedores</h2>
+  <table id="tablaProveedores">
+    <thead>
+      <tr>
+        <th class="numeracion">#</th>
+        <th>Nombre</th>
+        <th>Código</th>
+        <th>Categoría</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section id="entradasSection" class="section oculto">
+  <h2 class="seccion">📦 Registro de Entradas</h2>
+  <div style="background:#f0f9ff;padding:16px;border-radius:8px;margin-bottom:16px;">
+    <h3>➕ Agregar Entrada de Producto</h3>
+    <input type="text" id="codigoEntrada" placeholder="Código del Producto" required>
+    <input type="number" id="cantidadEntrada" placeholder="Cantidad de Entrada" required>
+    <button onclick="procesarEntrada()" class="btn btn-edit">Agregar Entrada</button>
+    <button onclick="volverAlInventario()" class="btn btn-del">Volver al Inventario</button>
+  </div>
+  <table id="tablaEntradas">
+    <thead>
+      <tr>
+        <th class="numeracion">#</th>
+        <th>Código</th>
+        <th>Descripción</th>
+        <th>Stock Anterior</th>
+        <th>Entradas</th>
+        <th>Nuevo Stock</th>
+        <th>Cajero</th>
+        <th>Fecha y Hora</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<input type="file" id="fileInput" accept=".csv" class="oculto">
+
+<script>
+/* ===============================
+   IndexedDB helper (promisified)
+   =============================== */
+const DB_NAME = 'farmalili-db';
+const DB_VERSION = 1;
+const STORE_PRODUCTOS = 'productos';
+const STORE_ENTRADAS = 'entradasHistorial';
+const STORE_HISTORIAL = 'historial';
+
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (db) return resolve(db);
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (ev) => {
+      const idb = ev.target.result;
+      if (!idb.objectStoreNames.contains(STORE_PRODUCTOS)) {
+        const prodStore = idb.createObjectStore(STORE_PRODUCTOS, { keyPath: 'codigo' });
+        prodStore.createIndex('nombre', 'nombre', { unique: false });
+        prodStore.createIndex('categoria', 'categoria', { unique: false });
+      }
+      if (!idb.objectStoreNames.contains(STORE_ENTRADAS)) {
+        idb.createObjectStore(STORE_ENTRADAS, { autoIncrement: true });
+      }
+      if (!idb.objectStoreNames.contains(STORE_HISTORIAL)) {
+        idb.createObjectStore(STORE_HISTORIAL, { autoIncrement: true });
+      }
+    };
+    req.onsuccess = (ev) => {
+      db = ev.target.result;
+      resolve(db);
+    };
+    req.onerror = (ev) => reject(ev.target.error);
+  });
+}
+
+async function idbPut(storeName, value) {
+  const idb = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.put(value);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGet(storeName, key) {
+  const idb = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbDelete(storeName, key) {
+  const idb = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGetAll(storeName) {
+  const idb = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/* ===============================
+   BroadcastChannel for sync
+   =============================== */
+const ventasChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('farmalili-ventas') : null;
+
+function broadcastUpdate(type, payload = {}) {
+  // type: 'venta', 'reembolso', 'producto_actualizado', 'producto_eliminado', 'entrada'
+  const msg = { type, payload, ts: Date.now() };
+  if (ventasChannel) ventasChannel.postMessage(msg);
+  // Fallback: write small token to localStorage to trigger storage event on other tabs/pages
+  try {
+    localStorage.setItem('farmalili_sync', JSON.stringify(msg));
+    // cleanup token quickly
+    setTimeout(() => localStorage.removeItem('farmalili_sync'), 3000);
+  } catch (e) {
+    // ignore
+  }
+}
+
+/* ===============================
+   UI references and state
+   =============================== */
+let usuarioActivo = localStorage.getItem("usuarioActivo") || "Cajero";
+document.getElementById("cajero").textContent = "👤 Cajero: " + usuarioActivo;
+let userType = 'cajero';
+let productoEnEdicion = null;
+
+/* Tables tbody refs */
+const tablaGeneralBody = document.querySelector('#tablaGeneralCompleta tbody');
+const tablaAntibioticosBody = document.querySelector('#tablaAntibioticos tbody');
+const tablaProveedoresBody = document.querySelector('#tablaProveedores tbody');
+const tablaEntradasBody = document.querySelector('#tablaEntradas tbody');
+
+/* Menu toggles */
+document.querySelector('.menu-button').addEventListener('click', () => {
+  const menu = document.getElementById('dropdownMenu');
+  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+});
+window.addEventListener('click', (event) => {
+  if (!event.target.matches('.menu-button')) {
+    document.getElementById('dropdownMenu').style.display = 'none';
+  }
+});
+
+/* Form controls */
+const loginSection = document.getElementById('loginSection');
+const adminSection = document.getElementById('adminSection');
+const loginForm = document.getElementById('loginForm');
+const addForm = document.getElementById('addForm');
+const categoriaSelect = document.getElementById('categoria');
+const salirAdmin = document.getElementById('salirAdmin');
+const loteCadFields = document.getElementById('loteCadFields');
+
+document.getElementById('abrirAdminBtn').addEventListener('click', abrirAdmin);
+document.getElementById('eliminarInventarioBtn').addEventListener('click', eliminarInventario);
+document.getElementById('agregarEntradaBtn').addEventListener('click', agregarEntrada);
+document.getElementById('descargarCatBtn').addEventListener('click', descargarInventarioPorCategoria);
+document.getElementById('descargarPdfCatBtn').addEventListener('click', descargarPDFPorCategoria);
+
+/* Search */
+document.getElementById('searchBar').addEventListener('input', renderTablasInventario);
+
+/* CSV file input */
+document.getElementById('fileInput').addEventListener('change', subirCSV);
+
+/* ===============================
+   Utilidades de estilo
+   =============================== */
+function getStockClass(stock = 0, min = 0) {
+  if (stock <= min + 10) return 'stock-rojo';
+  if (stock > min + 10 && stock <= min + 20) return 'stock-amarillo';
+  return 'stock-verde';
+}
+function getCaducidadClass(fechaCad) {
+  if (!fechaCad) return '';
+  const hoy = new Date();
+  const cad = new Date(fechaCad);
+  const diff = (cad - hoy) / (1000 * 60 * 60 * 24);
+  if (diff <= 20) return 'cad-rojo';
+  if (diff > 20 && diff <= 50) return 'cad-amarillo';
+  return 'cad-verde';
+}
+function getCategoriaClass(cat) {
+  switch (cat) {
+    case 'Farmacia': return 'categoria-farmacia';
+    case 'Tienda': return 'categoria-tienda';
+    case 'Antibiótico': return 'categoria-antibiotico';
+    case 'Papelería': return 'categoria-papeleria';
+    case 'Proveedores': return 'categoria-proveedores';
+    case 'Bebés': return 'categoria-bebes';
+    case 'Tecnología': return 'categoria-tecnologia';
+    case 'Accesorios': return 'categoria-accesorios';
+    default: return '';
+  }
+}
+
+/* ===============================
+   Operaciones sobre productos
+   =============================== */
+async function guardarProductoLocal(producto) {
+  // validación ligera
+  if (!producto || !producto.codigo) return;
+  // En antibióticos, exigir lote y caducidad
+  if (producto.categoria === 'Antibiótico' && (!producto.lote || !producto.caducidad)) {
+    alert('❌ Para antibióticos, los campos Lote y Caducidad son obligatorios');
+    return;
+  }
+  await idbPut(STORE_PRODUCTOS, producto);
+  // registrar en historial como 'producto_actualizado' o 'producto_creado'
+  await idbPut(STORE_HISTORIAL, { accion: 'producto_guardado', producto: producto, usuario: usuarioActivo, fecha: new Date().toISOString() });
+  // notificar otros tabs/páginas
+  broadcastUpdate('producto_actualizado', { codigo: producto.codigo });
+  await renderTablasInventario();
+  await actualizarEstadisticas();
+}
+
+async function eliminarProductoLocal(codigo) {
+  if (!confirm(`¿Eliminar producto ${codigo}?`)) return;
+  await idbDelete(STORE_PRODUCTOS, codigo);
+  await idbPut(STORE_HISTORIAL, { accion: 'producto_eliminado', codigo, usuario: usuarioActivo, fecha: new Date().toISOString() });
+  broadcastUpdate('producto_eliminado', { codigo });
+  await renderTablasInventario();
+  await actualizarEstadisticas();
+}
+
+async function obtenerProducto(codigo) {
+  return await idbGet(STORE_PRODUCTOS, codigo);
+}
+
+/* ===============================
+   Renderizado de tablas
+   =============================== */
+async function renderTablasInventario() {
+  // leer todos los productos desde IndexedDB
+  const productos = await idbGetAll(STORE_PRODUCTOS);
+  const searchTerm = document.getElementById('searchBar').value.trim().toLowerCase();
+
+  // filtrar no proveedores para tabla general
+  const productosNoProveedores = productos.filter(p => p.categoria !== 'Proveedores');
+
+  const productosFiltrados = productosNoProveedores.filter(p =>
+    (!searchTerm) ||
+    (p.nombre && p.nombre.toLowerCase().includes(searchTerm)) ||
+    (p.codigo && p.codigo.toLowerCase().includes(searchTerm))
+  );
+
+  const antibioticosFiltrados = productos.filter(p => p.categoria === 'Antibiótico' && (
+    !searchTerm || (p.nombre && p.nombre.toLowerCase().includes(searchTerm)) || (p.codigo && p.codigo.toLowerCase().includes(searchTerm))
+  ));
+
+  const proveedoresFiltrados = productos.filter(p => p.categoria === 'Proveedores' && (
+    !searchTerm || (p.nombre && p.nombre.toLowerCase().includes(searchTerm)) || (p.codigo && p.codigo.toLowerCase().includes(searchTerm))
+  ));
+
+  // limpiar tablas
+  tablaGeneralBody.innerHTML = '';
+  tablaAntibioticosBody.innerHTML = '';
+  tablaProveedoresBody.innerHTML = '';
+
+  productosFiltrados.forEach((p, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="numeracion">${idx + 1}</td>
+      <td>${p.codigo || 'ND'}</td>
+      <td>${p.nombre || 'ND'}</td>
+      <td class="precio-verde">${p.precio ? '$' + p.precio : 'ND'}</td>
+      <td>${p.lote || 'ND'}</td>
+      <td class="${getStockClass(p.stock, p.stockMin)}">${p.stock ?? 'ND'}</td>
+      <td class="stockmin-rojo">${p.stockMin ?? 'ND'}</td>
+      <td class="entradas-azul">${p.entradas ?? 'ND'}</td>
+      <td class="${getCategoriaClass(p.categoria)}">${p.categoria ?? 'ND'}</td>
+      <td class="${p.categoria === 'Antibiótico' ? getCaducidadClass(p.caducidad) : ''}">${p.categoria === 'Antibiótico' ? (p.caducidad || 'ND') : 'ND'}</td>
+      <td>
+        ${userType === 'admin' ? `<button class="btn btn-edit" onclick='editarProducto("${encodeURIComponent(JSON.stringify(p))}")'>✏️</button>
+        <button class="btn btn-del" onclick='eliminarProductoLocal("${p.codigo}")'>🗑️</button>` : ''}
+      </td>
+    `;
+    tablaGeneralBody.appendChild(tr);
+  });
+
+  antibioticosFiltrados.forEach((p, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="numeracion">${idx + 1}</td>
+      <td>${p.nombre || 'ND'}</td>
+      <td>${p.codigo || 'ND'}</td>
+      <td class="precio-verde">${p.precio ? '$' + p.precio : 'ND'}</td>
+      <td>${p.lote || 'ND'}</td>
+      <td class="${getStockClass(p.stock,p.stockMin)}">${p.stock ?? 'ND'}</td>
+      <td class="stockmin-rojo">${p.stockMin ?? 'ND'}</td>
+      <td class="entradas-azul">${p.entradas ?? 'ND'}</td>
+      <td class="${getCategoriaClass(p.categoria)}">${p.categoria ?? 'ND'}</td>
+      <td class="${getCaducidadClass(p.caducidad)}">${p.caducidad ?? 'ND'}</td>
+      <td>
+        ${userType === 'admin' ? `<button class="btn btn-edit" onclick='editarProducto("${encodeURIComponent(JSON.stringify(p))}")'>✏️</button>
+        <button class="btn btn-del" onclick='eliminarProductoLocal("${p.codigo}")'>🗑️</button>` : ''}
+      </td>
+    `;
+    tablaAntibioticosBody.appendChild(tr);
+  });
+
+  proveedoresFiltrados.forEach((p, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="numeracion">${idx + 1}</td>
+      <td>${p.nombre || 'ND'}</td>
+      <td>${p.codigo || 'ND'}</td>
+      <td class="${getCategoriaClass(p.categoria)}">${p.categoria || 'ND'}</td>
+      <td>
+        ${userType === 'admin' ? `<button class="btn btn-edit" onclick='editarProducto("${encodeURIComponent(JSON.stringify(p))}")'>✏️</button>
+        <button class="btn btn-del" onclick='eliminarProductoLocal("${p.codigo}")'>🗑️</button>` : ''}
+      </td>
+    `;
+    tablaProveedoresBody.appendChild(tr);
+  });
+}
+
+/* ===============================
+   Entradas (historial de entradas)
+   =============================== */
+async function registrarEntrada(codigo, descripcion, stockAnterior, entradas) {
+  const nuevaEntrada = {
+    codigo,
+    descripcion,
+    stockAnterior,
+    entradas,
+    nuevoStock: stockAnterior + entradas,
+    cajero: usuarioActivo,
+    fechaHora: new Date().toISOString()
+  };
+  await idbPut(STORE_ENTRADAS, nuevaEntrada); // se guarda con key autoIncrement
+  await idbPut(STORE_HISTORIAL, { accion: 'entrada', entrada: nuevaEntrada, usuario: usuarioActivo, fecha: new Date().toISOString() });
+  broadcastUpdate('entrada', { codigo, cantidad: entradas });
+  await renderTablaEntradas();
+}
+
+async function renderTablaEntradas() {
+  const entradas = await idbGetAll(STORE_ENTRADAS);
+  tablaEntradasBody.innerHTML = '';
+  entradas.forEach((entrada, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="numeracion">${i + 1}</td>
+      <td>${entrada.codigo}</td>
+      <td>${entrada.descripcion}</td>
+      <td>${entrada.stockAnterior}</td>
+      <td class="entradas-azul">${entrada.entradas}</td>
+      <td>${entrada.nuevoStock}</td>
+      <td>${entrada.cajero}</td>
+      <td>${new Date(entrada.fechaHora).toLocaleString()}</td>
+    `;
+    tablaEntradasBody.appendChild(tr);
+  });
+}
+
+/* ===============================
+   Actualización de stock por entradas/ventas/reembolsos
+   =============================== */
+async function actualizarStockConEntradas(codigo, cantidad) {
+  const producto = await idbGet(STORE_PRODUCTOS, codigo);
+  if (!producto) { alert('❌ Producto no encontrado. Verifique el código.'); return; }
+  const stockAnterior = producto.stock || 0;
+  producto.stock = stockAnterior + cantidad;
+  producto.entradas = (producto.entradas || 0) + cantidad;
+  await idbPut(STORE_PRODUCTOS, producto);
+  await registrarEntrada(codigo, producto.nombre, stockAnterior, cantidad);
+  await renderTablasInventario();
+  await actualizarEstadisticas();
+}
+
+async function actualizarStockConVentas(ventaData) {
+  // ventaData.productos = [{ codigo, cantidad }, ...]
+  for (const item of ventaData.productos) {
+    const producto = await idbGet(STORE_PRODUCTOS, item.codigo);
+    if (producto) {
+      producto.stock = Math.max(0, (producto.stock || 0) - item.cantidad);
+      producto.entradas = Math.max(0, (producto.entradas || 0) - item.cantidad);
+      await idbPut(STORE_PRODUCTOS, producto);
+    }
+  }
+  await idbPut(STORE_HISTORIAL, { accion: 'venta', venta: ventaData, usuario: ventaData.usuario || 'venta', fecha: new Date().toISOString() });
+  broadcastUpdate('venta', ventaData);
+  await renderTablasInventario();
+  await actualizarEstadisticas();
+}
+
+async function actualizarStockConReembolsos(ventaData, codigosReemb, cantidadesReemb) {
+  for (let i = 0; i < codigosReemb.length; i++) {
+    const codigo = codigosReemb[i];
+    const cantidad = cantidadesReemb[i];
+    const producto = await idbGet(STORE_PRODUCTOS, codigo);
+    if (producto) {
+      producto.stock = (producto.stock || 0) + cantidad;
+      producto.entradas = (producto.entradas || 0) + cantidad;
+      await idbPut(STORE_PRODUCTOS, producto);
+    }
+  }
+  await idbPut(STORE_HISTORIAL, { accion: 'reembolso', codigos: codigosReemb, cantidades: cantidadesReemb, usuario: usuarioActivo, fecha: new Date().toISOString() });
+  broadcastUpdate('reembolso', { codigos: codigosReemb, cantidades: cantidadesReemb });
+  await renderTablasInventario();
+  await actualizarEstadisticas();
+}
+
+/* ===============================
+   CSV upload (robusta)
+   =============================== */
+async function subirCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById('uploadContainer').classList.remove('oculto');
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('statusMessage').style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    // progreso simulado
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      document.getElementById('progressBar').style.width = progress + '%';
+      if (progress >= 100) clearInterval(interval);
+    }, 150);
+
+    setTimeout(async () => {
+      try {
+        const raw = e.target.result;
+        const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length === 0) throw new Error('Archivo vacío');
+
+        // detect headers
+        const first = lines[0].split(',').map(h => h.toLowerCase().trim());
+        const known = ['codigo','código','nombre','descripcion','descripción','precio','lote','stock','stockmin','stock mínimo','entradas','categoria','categoría','caducidad','fecha','fecha de caducidad'];
+        const hasHeaders = first.some(h => known.includes(h));
+
+        const headerMap = {};
+        if (hasHeaders) {
+          first.forEach((h, idx) => {
+            const clean = h.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            if (clean.includes('codigo')) headerMap.codigo = idx;
+            else if (clean.includes('nombre') || clean.includes('descripcion')) headerMap.nombre = idx;
+            else if (clean.includes('precio')) headerMap.precio = idx;
+            else if (clean.includes('lote')) headerMap.lote = idx;
+            else if (clean.includes('stock') && clean.includes('min')===false) headerMap.stock = idx;
+            else if (clean.includes('minimo') || clean.includes('min')) headerMap.stockMin = idx;
+            else if (clean.includes('entradas')) headerMap.entradas = idx;
+            else if (clean.includes('categoria')) headerMap.categoria = idx;
+            else if (clean.includes('caducidad') || clean.includes('fecha')) headerMap.caducidad = idx;
+          });
+        }
+
+        const start = hasHeaders ? 1 : 0;
+        let cambios = 0;
+        for (let i = start; i < lines.length; i++) {
+          const parts = lines[i].split(',');
+          // ensure length
+          while (parts.length < 9) parts.push('');
+          const producto = {
+            codigo: headerMap.codigo !== undefined ? parts[headerMap.codigo].trim() : (parts[0]||'').trim(),
+            nombre: headerMap.nombre !== undefined ? parts[headerMap.nombre].trim() : (parts[1]||'').trim(),
+            precio: headerMap.precio !== undefined ? parseFloat(parts[headerMap.precio]) || 0 : parseFloat(parts[2]) || 0,
+            lote: headerMap.lote !== undefined ? parts[headerMap.lote].trim() : (parts[3]||'').trim(),
+            stock: headerMap.stock !== undefined ? parseInt(parts[headerMap.stock]) || 0 : parseInt(parts[4]) || 0,
+            stockMin: headerMap.stockMin !== undefined ? parseInt(parts[headerMap.stockMin]) || 0 : parseInt(parts[5]) || 0,
+            entradas: headerMap.entradas !== undefined ? parseInt(parts[headerMap.entradas]) || 0 : parseInt(parts[6]) || 0,
+            categoria: headerMap.categoria !== undefined ? parts[headerMap.categoria].trim() : (parts[7]||'').trim(),
+            caducidad: headerMap.caducidad !== undefined ? parts[headerMap.caducidad].trim() : (parts[8]||'').trim()
+          };
+          if (!producto.codigo) continue; // saltar filas sin código
+          await idbPut(STORE_PRODUCTOS, producto);
+          cambios++;
+        }
+
+        await idbPut(STORE_HISTORIAL, { accion: 'import_csv', cantidad: cambios, usuario: usuarioActivo, fecha: new Date().toISOString() });
+        broadcastUpdate('import_csv', { cambios });
+
+        document.getElementById('statusMessage').textContent = `✅ Inventario cargado correctamente (${cambios} filas)`;
+        document.getElementById('statusMessage').className = 'status-message status-success';
+        document.getElementById('statusMessage').style.display = 'block';
+
+        await renderTablasInventario();
+        await actualizarEstadisticas();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('statusMessage').textContent = '❌ Error cargando CSV: ' + (err.message || err);
+        document.getElementById('statusMessage').className = 'status-message status-error';
+        document.getElementById('statusMessage').style.display = 'block';
+      } finally {
+        setTimeout(()=> document.getElementById('uploadContainer').classList.add('oculto'), 2000);
+      }
+    }, 800);
+  };
+  reader.readAsText(file);
+}
+
+/* ===============================
+   Eliminar todo inventario
+   (vacía objetos stores)
+   =============================== */
+async function eliminarInventario() {
+  if (!confirm('⚠️ ¿Seguro que quieres eliminar TODO el inventario y entradas?')) return;
+  // Re-crear la base para limpiar
+  const req = indexedDB.deleteDatabase(DB_NAME);
+  req.onsuccess = async () => {
+    db = null;
+    await openDB();
+    await idbPut(STORE_HISTORIAL, { accion: 'eliminar_inventario_total', usuario: usuarioActivo, fecha: new Date().toISOString() });
+    broadcastUpdate('eliminar_inventario_total', {});
+    await renderTablasInventario();
+    await renderTablaEntradas();
+    await actualizarEstadisticas();
+    alert('🗑️ Inventario eliminado');
+  };
+  req.onerror = (e) => alert('Error al eliminar DB: ' + e.target.error);
+}
+
+/* ===============================
+   Exportar CSV / PDF por categoría
+   =============================== */
+async function descargarInventarioPorCategoria() {
+  const categorias = ['general', 'Antibiótico', 'Papelería', 'Tienda', 'Farmacia', 'Proveedores', 'Bebés', 'Tecnología', 'Accesorios'];
+  const categoria = prompt(`Ingrese la categoría a descargar:\n${categorias.join('\n')}`);
+  if (!categoria) return;
+  const productos = await idbGetAll(STORE_PRODUCTOS);
+  let seleccion = [];
+  if (categoria.toLowerCase() === 'general') seleccion = productos;
+  else seleccion = productos.filter(p => (p.categoria || '').toLowerCase() === categoria.toLowerCase());
+  if (!seleccion.length) return alert('❌ No hay productos en esa categoría.');
+  let csv = 'Código,Nombre,Precio,Stock,StockMin,Entradas,Categoría,Caducidad,Lote\n';
+  seleccion.forEach(i => {
+    csv += `${i.codigo || ''},${i.nombre || ''},${i.precio || 0},${i.stock || 0},${i.stockMin || 0},${i.entradas || 0},${i.categoria || ''},${i.caducidad || ''},${i.lote || ''}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `inventario_${categoria}.csv`;
+  link.click();
+}
+
+async function descargarPDFPorCategoria() {
+  const categorias = ['general', 'Antibiótico', 'Papelería', 'Tienda', 'Farmacia', 'Proveedores', 'Bebés', 'Tecnología', 'Accesorios'];
+  const categoria = prompt(`Ingrese la categoría para descargar PDF:\n${categorias.join('\n')}`);
+  if (!categoria) return;
+  const productos = await idbGetAll(STORE_PRODUCTOS);
+  let seleccion = [];
+  if (categoria.toLowerCase() === 'general') seleccion = productos;
+  else seleccion = productos.filter(p => (p.categoria || '').toLowerCase() === categoria.toLowerCase());
+  if (!seleccion.length) return alert('❌ No hay productos en esa categoría.');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text(`Inventario - ${categoria}`, 14, 15);
+
+  // crear tabla 'in memory'
+  const tempTable = document.createElement('table');
+  tempTable.id = 'tempTableForPDF';
+  tempTable.style.display = 'none';
+  const head = '<thead><tr><th>Nombre</th><th>Código</th><th>Precio</th><th>Stock</th><th>Stock Mínimo</th><th>Entradas</th><th>Categoría</th><th>Caducidad</th></tr></thead>';
+  let body = '<tbody>';
+  seleccion.forEach(p => {
+    body += `<tr><td>${p.nombre || ''}</td><td>${p.codigo || ''}</td><td>${p.precio || 0}</td><td>${p.stock || 0}</td><td>${p.stockMin || 0}</td><td>${p.entradas || 0}</td><td>${p.categoria || ''}</td><td>${p.caducidad || ''}</td></tr>`;
+  });
+  body += '</tbody>';
+  tempTable.innerHTML = head + body;
+  document.body.appendChild(tempTable);
+
+  doc.autoTable({ html: '#tempTableForPDF', startY: 25 });
+  document.body.removeChild(tempTable);
+  doc.save(`inventario_${categoria}.pdf`);
+}
+
+/* ===============================
+   Estadísticas
+   =============================== */
+async function actualizarEstadisticas() {
+  const productos = await idbGetAll(STORE_PRODUCTOS);
+  const totalProductos = productos.length;
+  const totalStock = productos.reduce((sum, p) => sum + ((p.stock) || 0), 0);
+  const categorias = [...new Set(productos.map(p => p.categoria || 'N/A'))].length;
+  const bajoStock = productos.filter(p => (p.stock || 0) <= (p.stockMin || 0)).length;
+
+  document.getElementById('totalProductos').textContent = totalProductos;
+  document.getElementById('totalStock').textContent = totalStock;
+  document.getElementById('categorias').textContent = categorias;
+  document.getElementById('bajoStock').textContent = bajoStock;
+}
+
+/* ===============================
+   Formularios y eventos UI
+   =============================== */
+addForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const p = {
+    nombre: document.getElementById('nombre').value.trim(),
+    codigo: document.getElementById('codigo').value.trim(),
+    precio: parseFloat(document.getElementById('precio').value) || 0,
+    lote: document.getElementById('lote').value.trim(),
+    stock: parseInt(document.getElementById('stock').value) || 0,
+    stockMin: parseInt(document.getElementById('stockMin').value) || 0,
+    entradas: parseInt(document.getElementById('entradas').value) || 0,
+    categoria: document.getElementById('categoria').value,
+    caducidad: document.getElementById('caducidad').value || ''
+  };
+
+  if (p.categoria === 'Antibiótico' && (!p.lote || !p.caducidad)) {
+    alert('❌ Para antibióticos, los campos Lote y Caducidad son obligatorios');
+    return;
+  }
+
+  await guardarProductoLocal(p);
+  addForm.reset();
+  loteCadFields.classList.add('oculto');
+});
+
+function editarProducto(encoded) {
+  // recibe JSON stringifyado y URI encoded
+  try {
+    const p = JSON.parse(decodeURIComponent(encoded));
+    productoEnEdicion = p;
+    document.getElementById('nombre').value = p.nombre || '';
+    document.getElementById('codigo').value = p.codigo || '';
+    document.getElementById('precio').value = p.precio || '';
+    document.getElementById('lote').value = p.lote || '';
+    document.getElementById('stock').value = p.stock || '';
+    document.getElementById('stockMin').value = p.stockMin || '';
+    document.getElementById('entradas').value = p.entradas || '';
+    document.getElementById('categoria').value = p.categoria || '';
+    document.getElementById('caducidad').value = p.caducidad || '';
+
+    if (p.categoria === 'Antibiótico') loteCadFields.classList.remove('oculto');
+    else loteCadFields.classList.add('oculto');
+
+    adminSection.classList.remove('oculto');
+    loginSection.classList.add('oculto');
+    userType = 'admin';
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+categoriaSelect.addEventListener('change', (e) => {
+  if (e.target.value === 'Antibiótico') loteCadFields.classList.remove('oculto');
+  else loteCadFields.classList.add('oculto');
+});
+
+function abrirAdmin() {
+  loginSection.classList.remove('oculto');
+}
+
+loginForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const pass = document.getElementById('adminPass').value;
+  if (pass === 'Mariposa2026') {
+    loginSection.classList.add('oculto');
+    adminSection.classList.remove('oculto');
+    userType = 'admin';
+    renderTablasInventario();
+  } else alert('❌ Contraseña incorrecta');
+});
+
+salirAdmin.addEventListener('click', () => {
+  adminSection.classList.add('oculto');
+  loginSection.classList.add('oculto');
+  userType = 'cajero';
+  renderTablasInventario();
+});
+
+function agregarEntrada() {
+  document.getElementById('entradasSection').classList.remove('oculto');
+  document.getElementById('generalSection').classList.add('oculto');
+  document.getElementById('AntibioticosSection').classList.add('oculto');
+  document.getElementById('proveedoresSection').classList.add('oculto');
+  renderTablaEntradas();
+}
+
+function volverAlInventario() {
+  document.getElementById('entradasSection').classList.add('oculto');
+  document.getElementById('generalSection').classList.remove('oculto');
+  document.getElementById('AntibioticosSection').classList.remove('oculto');
+  document.getElementById('proveedoresSection').classList.remove('oculto');
+}
+
+/* Procesar entrada desde formulario */
+function procesarEntrada() {
+  const codigo = document.getElementById('codigoEntrada').value.trim();
+  const cantidad = parseInt(document.getElementById('cantidadEntrada').value);
+  if (!codigo || !cantidad) { alert('❌ Por favor ingrese código y cantidad'); return; }
+  actualizarStockConEntradas(codigo, cantidad);
+  document.getElementById('codigoEntrada').value = '';
+  document.getElementById('cantidadEntrada').value = '';
+}
+
+/* Cerrar sesión */
+function cerrarSesion() {
+  alert('🚪 Sesión cerrada correctamente');
+  window.location.href = "index.html";
+}
+
+/* ===============================
+   Escucha mensajes de BroadcastChannel / localStorage
+   (para sincronizar con ven1.html / histori1.html)
+   =============================== */
+if (ventasChannel) {
+  ventasChannel.onmessage = async (ev) => {
+    const msg = ev.data;
+    await handleExternalMessage(msg);
+  };
+}
+
+// storage fallback (cuando otras páginas usan localStorage)
+window.addEventListener('storage', async (ev) => {
+  if (ev.key === 'farmalili_sync' && ev.newValue) {
+    try {
+      const msg = JSON.parse(ev.newValue);
+      await handleExternalMessage(msg);
+    } catch (e) { /* ignore */ }
+  }
+});
+
+async function handleExternalMessage(msg) {
+  if (!msg || !msg.type) return;
+  try {
+    switch (msg.type) {
+      case 'venta':
+        // msg.payload = { productos:[{codigo,cantidad}], usuario }
+        await actualizarStockConVentas(msg.payload);
+        break;
+      case 'reembolso':
+        // payload: { codigos, cantidades }
+        await actualizarStockConReembolsos(null, msg.payload.codigos, msg.payload.cantidades);
+        break;
+      case 'producto_actualizado':
+      case 'producto_eliminado':
+      case 'entrada':
+      case 'import_csv':
+      case 'eliminar_inventario_total':
+        // simplemente refrescar tablas/estadísticas
+        await renderTablasInventario();
+        await renderTablaEntradas();
+        await actualizarEstadisticas();
+        break;
+      default:
+        // ignorar tipos desconocidos
+        break;
+    }
+  } catch (err) {
+    console.error('Error al manejar mensaje externo', err);
+  }
+}
+
+/* ===============================
+   Inicialización
+   =============================== */
+(async function init() {
+  await openDB();
+  // render inicial
+  await renderTablasInventario();
+  await renderTablaEntradas();
+  await actualizarEstadisticas();
+})();
+
+/* ===============================
+   Al final: expose algunas funciones al scope global
+   (para botones dentro de innerHTML)
+   =============================== */
+window.editarProducto = editarProducto;
+window.eliminarProductoLocal = eliminarProductoLocal;
+window.procesarEntrada = procesarEntrada;
+window.subirCSV = subirCSV;
+window.renderTablasInventario = renderTablasInventario;
+window.actualizarEstadisticas = actualizarEstadisticas;
+window.renderTablaEntradas = renderTablaEntradas;
+window.actualizarStockConVentas = actualizarStockConVentas;
+window.actualizarStockConReembolsos = actualizarStockConReembolsos;
+window.descargarInventarioPorCategoria = descargarInventarioPorCategoria;
+window.descargarPDFPorCategoria = descargarPDFPorCategoria;
+</script>
+</body>
+</html>
