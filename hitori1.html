@@ -1,0 +1,826 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>📜 Historial - Farmacia Lili 📜</title>
+<style>
+* {box-sizing:border-box;}
+body { font-family: system-ui, sans-serif; background:#6c6d6e; color:#1f2937; margin:0; padding:0;}
+header{
+  background:linear-gradient(90deg,#2563eb,#1e40af);
+  color:white;
+  padding:22px;
+  font-size:24px;
+  font-weight:700;
+  text-align:center;
+  position:relative;
+  box-shadow:0 4px 18px rgba(15,23,42,0.12);
+}
+header img{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  width:120px; height:80px; border-radius:12px; border:2px solid rgba(255,255,255,0.2);
+}
+main { width:100%; padding:1px; display:flex; flex-direction:column; gap:1px;}
+
+nav.main-menu{
+  display:flex;align-items:center;gap:2px;
+  background:#eef6ff;padding:10px 16px;border-bottom:1px solid #dbeafe;
+  position:sticky; top:0; z-index:50;
+}
+.main-menu .menu-link{
+  text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:600;color:#0f172a;border:1px solid #2563eb;
+}
+.main-menu .menu-link.active{background:#1e40af;color:white;border-color:#1e40af;}
+#cajero{margin-left:auto;font-weight:700;color:#1e40af;}
+#logout{background:#ef4444;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;}
+main{padding:1px;display:flex;flex-direction:column;gap:18px;max-width:1200px;margin:0 auto;}
+section.card { width: 100%; background:white;padding:5px;border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,0.06);border:1px solid rgba(2,6,23,0.03);}
+h2{color:#1e3a8a;margin-bottom:8px;}
+.table-container{width:100%;overflow:auto;margin-top:1px;border-radius:8px;}
+table{width:100%;border-collapse:collapse;font-size:0.95rem;}
+th,td{padding:8px;border-bottom:1px solid #e6eef8;text-align:left;}
+th{background:#1e40af;color:white;position:sticky;top:0;}
+tfoot td{font-weight:700;background:#f1f8ff;text-align:right;}
+.small-muted{font-size:0.9rem;color:#64748b;}
+.toggle-btn{background:#0ea5e9;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;margin-top:6px;}
+.toggle-btn:hover{opacity:0.95;}
+.hidden{display:none;}
+.modal{display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center;z-index:200;}
+.modal-card{width:520px;background:linear-gradient(180deg,#ffffff,#f0f9ff);border-radius:14px;padding:1px;box-shadow:0 8px 40px rgba(2,6,23,0.3);border:1px solid rgba(30,64,175,0.08);}
+.modal-card h3{margin-bottom:10px;color:#1e40af;text-align:center;}
+.modal-card label{display:flex;justify-content:space-between;align-items:center;margin:6px 0;}
+.modal-card input[type="number"]{width:110px;padding:6px;border-radius:6px;border:1px solid #c7ddff;}
+.modal-card .total-row{margin-top:12px;font-weight:700;color:#0f172a;text-align:right;}
+.btn-primary{background:#16a34a;color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;margin-top:10px;}
+.btn-secondary{background:#ef4444;color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;margin-left:8px;}
+.note{font-size:0.9rem;color:#475569;margin-top:8px;}
+@media (max-width:720px){
+  header img{display:none;}
+  .modal-card{width:100%;}
+  th,td{font-size:0.85rem;padding:6px;}
+}
+
+/* Dropdown styles */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+.dropdown-content a:hover {
+  background-color: #f1f1f1;
+}
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+.dropdown:hover .toggle-btn {
+  background-color: #0d95d1;
+}
+
+/* Search bar styles */
+.search-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 10px;
+}
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  width: 250px;
+  min-width: 200px;
+}
+.search-btn {
+  background: #1e40af;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.search-btn:hover {
+  background: #1e3a8a;
+}
+.clear-btn {
+  background: #64748b;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.clear-btn:hover {
+  background: #475569;
+}
+
+/* Historial section hidden by default */
+#historialSection,
+#historialCorteSection {
+  display: none;
+}
+</style>
+</head>
+<body>
+<header>
+  <img src="ventas.png" alt="Logo Ventas">
+  📜 Historial - FarmaciaLili 1.0 📜 
+</header>
+
+<nav class="main-menu">
+  <a href="farma1.html" class="menu-link">💳 Ventas</a>
+  <a href="inven1.html" class="menu-link">📦 Inventario</a>
+  <a href="hitori1.html" class="menu-link active">📜 Historial</a>
+  
+  <div class="dropdown">
+    <button class="toggle-btn">📋 Opciones</button>
+    <div class="dropdown-content">
+      <a href="#" onclick="toggleHistorial()">📂 Historial de ventas 📂</a>
+      <a href="#" onclick="toggleHistorialCorte()">📋 Historial de Corte 📋</a>
+    </div>
+  </div>
+  
+  <span id="cajero"></span>
+  <button id="logout">Cerrar Sesión</button>
+</nav>
+
+<main>
+  <!-- Ventas Generales -->
+  <section class="card">
+    <h2>💵 Ventas Generales </h2>
+    <div class="small-muted"> <code>ve¡s</code>  <code></code>.</div>
+    <div class="table-container">
+      <table id="tabla-ventas-general">
+        <thead>
+          <tr><th>#</th><th>Producto</th><th>Código</th><th>Cantidad</th><th>Folio</th><th>Fecha</th><th>Cajero</th><th>Método</th><th>Subtotal</th></tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot><tr><td colspan="8">Total General</td><td id="total-general">$0.00</td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- Ventas Antibióticos -->
+  <section class="card">
+    <h2>💊 Ventas Antibióticos</h2>
+    <div class="table-container">
+      <table id="tabla-antibioticos">
+        <thead>
+          <tr>
+            <th>#</th><th>Producto</th><th>Código</th><th>Cantidad</th><th>Folio</th><th>Doctor</th><th>Cédula</th><th>Dirección</th><th>Receta</th><th>Lote</th><th>Fecha</th><th>Cajero</th><th>Método</th><th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr><td colspan="13">Total Antibióticos</td><td id="total-antibioticos">$0.00</td></tr>
+          <tr><td colspan="14" style="text-align:center;">
+            <button class="btn-primary" onclick="abrirModalCorte()">💾 Realizar Corte</button>
+          </td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- Historial de Ventas -->
+  <section class="card" id="historialSection">
+    <h2>historial de ventas </h2>
+    <div class="search-container">
+      <div>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre o código...">
+        <button onclick="buscarHistorial()" class="search-btn">🔍 Buscar</button>
+        <button onclick="limpiarBusqueda()" class="clear-btn">🗑️ Limpiar</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table id="tabla-historial">
+        <thead>
+          <tr>
+            <th>#</th><th>Producto</th><th>Código</th><th>Cantidad</th><th>Folio</th><th>Doctor</th><th>Cédula</th><th>Dirección</th><th>Receta</th><th>Lote</th><th>Fecha</th><th>Cajero</th><th>Método</th><th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Historial de Cortes -->
+  <section class="card" id="historialCorteSection">
+    <h2>📋 Historial de Corte</h2>
+    <div class="table-container">
+      <table id="tabla-historial-corte">
+        <thead>
+          <tr>
+            <th>#</th><th>Fecha y Hora</th><th>Cajero</th><th>Inicio Caja</th><th>Efectivo</th><th>Tarjeta</th><th>Transferencia</th><th>Proveedores</th><th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- Modal Corte -->
+<div class="modal" id="modalCorte">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">💵 Panel de Corte</h3>
+    <label style="margin-top:8px;">Cantidad Inicio Caja: <input id="inicioCaja" type="number" value="0" step="0.01" style="padding:6px;border-radius:6px;border:1px solid #c7ddff;"></label>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+      <label>💵 1000: <input class="billete" data-valor="1000" type="number" value="0"></label>
+      <label>💵 500:  <input class="billete" data-valor="500" type="number" value="0"></label>
+      <label>💵 200:  <input class="billete" data-valor="200" type="number" value="0"></label>
+      <label>💵 100:  <input class="billete" data-valor="100" type="number" value="0"></label>
+      <label>💵 50:   <input class="billete" data-valor="50" type="number" value="0"></label>
+      <label>💵 20:   <input class="billete" data-valor="20" type="number" value="0"></label>
+      <label>🪙 10:   <input class="billete" data-valor="10" type="number" value="0"></label>
+      <label>🪙 5:    <input class="billete" data-valor="5" type="number" value="0"></label>
+      <label>🪙 2:    <input class="billete" data-valor="2" type="number" value="0"></label>
+      <label>🪙 1:    <input class="billete" data-valor="1" type="number" value="0"></label>
+      <label>🪙 0.50: <input class="billete" data-valor="0.5" type="number" value="0"></label>
+    </div>
+
+    <div class="total-row">Total Efectivo: <span id="totalEfectivo">0</span></div>
+    
+    <!-- Totales por método de pago -->
+    <div style="margin-top:15px; padding:10px; background:#f0f9ff; border-radius:8px;">
+      <h4 style="margin:0 0 10px; color:#1e40af; text-align: center; font-weight: bold;">Resumen por Método de Pago:</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:15px;">
+        <div style="flex:1; min-width:150px;">
+          <p style="margin:5px 0; font-weight:bold;">Efectivo: <span id="resumenEfectivo">$0.00</span></p>
+          <p style="margin:5px 0; font-weight:bold;">Tarjeta: <span id="resumenTarjeta">$0.00</span></p>
+        </div>
+        <div style="flex:1; min-width:150px;">
+          <p style="margin:5px 0; font-weight:bold;">Transferencia: <span id="resumenTransferencia">$0.00</span></p>
+          <p style="margin:5px 0; font-weight:bold;">Proveedores: <span id="resumenProveedor">$0.00</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+      <button class="btn-primary" onclick="finalizarCorte()">✅ Finalizar Corte</button>
+      <button class="btn-secondary" onclick="cerrarModalCorte()">❌ Cerrar</button>
+    </div>
+   
+  </div>
+</div>
+
+<script>
+let usuarioActivo = localStorage.getItem("usuarioActivo");
+if(usuarioActivo){
+  document.getElementById("cajero").textContent = "👤 Cajero: " + usuarioActivo;
+}
+
+function parseJSON(key){ 
+  try{ 
+    return JSON.parse(localStorage.getItem(key)||"[]"); 
+  }catch(e){ 
+    console.warn(`Error al parsear ${key}:`, e);
+    return []; 
+  } 
+}
+
+function setJSON(key,val){ 
+  localStorage.setItem(key, JSON.stringify(val)); 
+}
+
+function formatDinero(n){ 
+  return "$" + (Number(n||0)).toFixed(2); 
+}
+
+// Función para cerrar sesión
+function cerrarSesion() {
+  localStorage.removeItem("usuarioActivo");
+  window.location.href = "index.html";
+}
+
+// Evento para el botón de cerrar sesión
+document.getElementById("logout").addEventListener("click", cerrarSesion);
+
+function cargarTodasLasVentas(){
+  const ventas = [];
+  const keys = Object.keys(localStorage);
+  
+  for(const key of keys){
+    if(key.startsWith('ventas') && key !== 'ventasCorte' && key !== 'cortes'){
+      try{
+        const data = JSON.parse(localStorage.getItem(key));
+        if(Array.isArray(data)){
+          ventas.push(...data);
+        }
+      }catch(e){
+        console.warn(`Error al parsear ${key}:`, e);
+      }
+    }
+  }
+  
+  const foliosVistos = new Set();
+  return ventas.filter(venta => {
+    if(foliosVistos.has(venta.folio)){
+      return false;
+    }
+    foliosVistos.add(venta.folio);
+    return true;
+  });
+}
+
+function renderVentas(){
+  const ventas = cargarTodasLasVentas();
+  const tbodyG = document.querySelector("#tabla-ventas-general tbody");
+  const tbodyA = document.querySelector("#tabla-antibioticos tbody");
+  tbodyG.innerHTML = ""; tbodyA.innerHTML = "";
+  let totalG = 0, totalA = 0;
+  let idxG = 1, idxA = 1;
+  
+  ventas.forEach(v=>{
+    (v.productos||[]).forEach(item=>{
+      const subtotal = (Number(item.precio) || 0) * (Number(item.cantidad) || 0);
+      const trG = document.createElement('tr');
+      trG.innerHTML = `<td>${idxG++}</td>
+        <td>${item.nombre||'-'}</td>
+        <td>${item.codigo||'-'}</td>
+        <td>${item.cantidad||0}</td>
+        <td>${v.folio||'-'}</td>
+        <td>${v.fecha||'-'}</td>
+        <td>${v.cajero||'-'}</td>
+        <td>${v.metodo||'-'}</td>
+        <td>${formatDinero(subtotal)}</td>`;
+      tbodyG.appendChild(trG);
+      totalG += subtotal;
+
+      const codigoStr = String(item.codigo || '').toUpperCase();
+      if(codigoStr.startsWith('A')){
+        const trA = document.createElement('tr');
+        trA.innerHTML = `<td>${idxA++}</td>
+          <td>${item.nombre||'-'}</td>
+          <td>${item.codigo||'-'}</td>
+          <td>${item.cantidad||0}</td>
+          <td>${v.folio||'-'}</td>
+          <td>${v.doctor?.nombre||'-'}</td>
+          <td>${v.doctor?.cedula||'-'}</td>
+          <td>${v.doctor?.direccion||'-'}</td>
+          <td>${v.doctor?.folioReceta||'-'}</td>
+          <td>${item.lote||'-'}</td>
+          <td>${v.fecha||'-'}</td>
+          <td>${v.cajero||'-'}</td>
+          <td>${v.metodo||'-'}</td>
+          <td>${formatDinero(subtotal)}</td>`;
+        tbodyA.appendChild(trA);
+        totalA += subtotal;
+      }
+    });
+  });
+
+  document.getElementById('total-general').textContent = formatDinero(totalG);
+  document.getElementById('total-antibioticos').textContent = formatDinero(totalA);
+}
+
+// Función para renderizar el historial completo
+function renderHistorialCompleto() {
+  const ventasCorte = parseJSON('ventasCorte');
+  const tbody = document.querySelector("#tabla-historial tbody");
+  tbody.innerHTML = "";
+  let idx = 1;
+  
+  ventasCorte.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${idx++}</td>
+      <td>${item.producto||'-'}</td>
+      <td>${item.codigo||'-'}</td>
+      <td>${item.cantidad||0}</td>
+      <td>${item.folio||'-'}</td>
+      <td>${item.doctor||'-'}</td>
+      <td>${item.cedula||'-'}</td>
+      <td>${item.direccion||'-'}</td>
+      <td>${item.receta||'-'}</td>
+      <td>${item.lote||'-'}</td>
+      <td>${item.fecha||'-'}</td>
+      <td>${item.cajero||'-'}</td>
+      <td>${item.metodo||'-'}</td>
+      <td>${formatDinero(item.subtotal)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// Función para buscar en el historial
+function buscarHistorial() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const ventasCorte = parseJSON('ventasCorte');
+  const tbody = document.querySelector("#tabla-historial tbody");
+  tbody.innerHTML = "";
+  let idx = 1;
+  
+  ventasCorte.forEach(item => {
+    const nombre = (item.producto || '').toLowerCase();
+    const codigo = (item.codigo || '').toLowerCase();
+    
+    if (nombre.includes(searchTerm) || codigo.includes(searchTerm)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${idx++}</td>
+        <td>${item.producto||'-'}</td>
+        <td>${item.codigo||'-'}</td>
+        <td>${item.cantidad||0}</td>
+        <td>${item.folio||'-'}</td>
+        <td>${item.doctor||'-'}</td>
+        <td>${item.cedula||'-'}</td>
+        <td>${item.direccion||'-'}</td>
+        <td>${item.receta||'-'}</td>
+        <td>${item.lote||'-'}</td>
+        <td>${item.fecha||'-'}</td>
+        <td>${item.cajero||'-'}</td>
+        <td>${item.metodo||'-'}</td>
+        <td>${formatDinero(item.subtotal)}</td>`;
+      tbody.appendChild(tr);
+    }
+  });
+  
+  // Mostrar mensaje si no hay resultados
+  if (tbody.children.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="14" style="text-align:center; padding:20px;">No se encontraron resultados para "${searchTerm}"</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// Función para limpiar la búsqueda
+function limpiarBusqueda() {
+  document.getElementById('searchInput').value = '';
+  renderHistorialCompleto();
+}
+
+// Función para alternar la visibilidad del historial
+function toggleHistorial() {
+  const historialSection = document.getElementById('historialSection');
+  const historialCorteSection = document.getElementById('historialCorteSection');
+  
+  if (historialSection.style.display === 'none' || historialSection.style.display === '') {
+    historialSection.style.display = 'block';
+    historialCorteSection.style.display = 'none';
+    renderHistorialCompleto();
+  } else {
+    historialSection.style.display = 'none';
+  }
+}
+
+// Función para alternar la visibilidad del historial de corte
+function toggleHistorialCorte() {
+  const historialSection = document.getElementById('historialSection');
+  const historialCorteSection = document.getElementById('historialCorteSection');
+  
+  if (historialCorteSection.style.display === 'none' || historialCorteSection.style.display === '') {
+    historialCorteSection.style.display = 'block';
+    historialSection.style.display = 'none';
+    renderHistorialCorte();
+  } else {
+    historialCorteSection.style.display = 'none';
+  }
+}
+
+// Función para renderizar el historial de corte
+function renderHistorialCorte() {
+  const cortes = parseJSON('cortes');
+  const tbody = document.querySelector("#tabla-historial-corte tbody");
+  tbody.innerHTML = "";
+  let idx = 1;
+  
+  cortes.forEach(corte => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${idx++}</td>
+      <td>${corte.fecha||'-'}</td>
+      <td>${corte.cajero||'-'}</td>
+      <td>${formatDinero(corte.inicioCaja||0)}</td>
+      <td>${formatDinero(corte.efectivo||0)}</td>
+      <td>${formatDinero(corte.tarjeta||0)}</td>
+      <td>${formatDinero(corte.transferencia||0)}</td>
+      <td>${formatDinero(corte.proveedor||0)}</td>
+      <td>${formatDinero(corte.total||0)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- Modal Corte ----------
+function aplicarEstiloInicioCaja() {
+  const input = document.getElementById('inicioCaja');
+  input.readOnly = true;
+  input.style.backgroundColor = '#e2e8f0';
+}
+
+function abrirModalCorte(){
+  document.getElementById('modalCorte').style.display = 'flex';
+  
+  // 1. Cargar valor guardado de inicio de caja
+  const inicioGuardado = localStorage.getItem('inicioCajaTemporal');
+  const inputInicio = document.getElementById('inicioCaja');
+  
+  if(inicioGuardado !== null) {
+    inputInicio.value = inicioGuardado;
+    aplicarEstiloInicioCaja();
+  } else {
+    // Si no hay valor guardado, asegurarse de que esté editable
+    inputInicio.readOnly = false;
+    inputInicio.style.backgroundColor = '';
+  }
+  
+  // 2. Calcular y mostrar los totales por método de pago INMEDIATAMENTE
+  calcularTotalesMetodosPago();
+  
+  // 3. Reiniciar los campos de billetes (opcional, para evitar datos anteriores)
+  document.querySelectorAll('.billete').forEach(b => b.value = '0');
+  document.getElementById('totalEfectivo').textContent = '$0.00';
+}
+
+function cerrarModalCorte(){
+  document.getElementById('modalCorte').style.display = 'none';
+}
+
+function calcularTotalesMetodosPago(){
+  const ventas = cargarTodasLasVentas();
+  
+  let totalEfectivo = 0;
+  let totalTarjeta = 0;
+  let totalTransferencia = 0;
+  let totalProveedor = 0;
+  
+  ventas.forEach(v => {
+    const metodo = v.metodo || 'Efectivo';
+    const subtotal = (v.productos || []).reduce((sum, item) => sum + (Number(item.precio || 0) * Number(item.cantidad || 0)), 0);
+    
+    switch(metodo) {
+      case 'Efectivo':
+        totalEfectivo += subtotal;
+        break;
+      case 'Tarjeta':
+        totalTarjeta += subtotal;
+        break;
+      case 'Transferencia':
+        totalTransferencia += subtotal;
+        break;
+      case 'Proveedores':
+        totalProveedor += subtotal;
+        break;
+      default:
+        totalEfectivo += subtotal;
+    }
+  });
+  
+  document.getElementById('resumenEfectivo').textContent = formatDinero(totalEfectivo);
+  document.getElementById('resumenTarjeta').textContent = formatDinero(totalTarjeta);
+  document.getElementById('resumenTransferencia').textContent = formatDinero(totalTransferencia);
+  document.getElementById('resumenProveedor').textContent = formatDinero(totalProveedor);
+}
+
+function calcularTotalEfectivo() {
+  const billetes = document.querySelectorAll('.billete');
+  let totalE = 0;
+  billetes.forEach(b => {
+    totalE += Number(b.value || 0) * Number(b.dataset.valor || 0);
+  });
+  document.getElementById('totalEfectivo').textContent = formatDinero(totalE);
+}
+
+// Eventos para los inputs
+document.querySelectorAll('.billete').forEach(b => {
+  b.addEventListener('input', calcularTotalEfectivo);
+});
+
+document.getElementById('inicioCaja').addEventListener('input', function() {
+  if (this.value !== '' && !this.readOnly) {
+    localStorage.setItem('inicioCajaTemporal', this.value);
+  }
+});
+
+document.getElementById('inicioCaja').addEventListener('change', function() {
+  if (this.value !== '' && !this.readOnly) {
+    localStorage.setItem('inicioCajaTemporal', this.value);
+    aplicarEstiloInicioCaja();
+  }
+});
+
+function finalizarCorte(){
+  const inicioCaja = parseFloat(document.getElementById('inicioCaja').value) || 0;
+  const billetes = document.querySelectorAll('.billete');
+  let totalE = 0;
+  billetes.forEach(b => totalE += Number(b.value || 0) * Number(b.dataset.valor || 0));
+  const tarjeta = parseFloat(document.getElementById('resumenTarjeta').textContent.replace('$', '')) || 0;
+  const transferencia = parseFloat(document.getElementById('resumenTransferencia').textContent.replace('$', '')) || 0;
+  const proveedor = parseFloat(document.getElementById('resumenProveedor').textContent.replace('$', '')) || 0;
+  
+  const totalGeneral = totalE + tarjeta + transferencia - proveedor;
+
+  const cortes = parseJSON('cortes');
+  cortes.push({
+    fecha: new Date().toLocaleString(), 
+    cajero: usuarioActivo, 
+    inicioCaja: inicioCaja,
+    efectivo: totalE, 
+    tarjeta, 
+    transferencia, 
+    proveedor, 
+    total: totalGeneral
+  });
+  setJSON('cortes', cortes);
+
+  const ventas = cargarTodasLasVentas();
+  const ventasCorte = parseJSON('ventasCorte');
+  
+  ventas.forEach(v => {
+    v.productos.forEach(item => {
+      ventasCorte.push({
+        producto: item.nombre,
+        codigo: item.codigo,
+        cantidad: item.cantidad,
+        folio: v.folio,
+        doctor: v.doctor?.nombre || '',
+        cedula: v.doctor?.cedula || '',
+        direccion: v.doctor?.direccion || '',
+        receta: v.doctor?.folioReceta || '',
+        lote: item.lote || '',
+        fecha: v.fecha,
+        cajero: v.cajero,
+        metodo: v.metodo,
+        subtotal: (item.precio * item.cantidad)
+      });
+    });
+  });
+  
+  setJSON('ventasCorte', ventasCorte);
+
+  // Vaciar ventas actuales
+  const keys = Object.keys(localStorage);
+  for(const key of keys){
+    if(key.startsWith('ventas') && key !== 'ventasCorte' && key !== 'cortes'){
+      localStorage.setItem(key, JSON.stringify([]));
+    }
+  }
+
+  // Limpiar inicio de caja temporal
+  localStorage.removeItem('inicioCajaTemporal');
+
+  // Imprimir ticket
+  imprimirTicketCorte(inicioCaja, totalE, tarjeta, transferencia, proveedor, totalGeneral);
+
+  cerrarModalCorte();
+  renderVentas();
+  renderHistorialCompleto();
+  renderHistorialCorte();
+  
+  // Cerrar sesión
+  cerrarSesion();
+}
+
+function imprimirTicketCorte(inicioCaja, efectivo, tarjeta, transferencia, proveedor, totalGeneral) {
+  const ventana = window.open("","Ticket","width=300,height=600");
+  const fecha = new Date().toLocaleString();
+  
+  let html = `<html><head><title>Ticket de Corte</title>
+  <style>
+    body { 
+      font-family: 'Courier New', monospace; 
+      margin: 0; 
+      padding: 10px; 
+      background-color: #fff; 
+      color: #000;
+      font-size: 10px;
+      line-height: 1.2;
+      width: 2.2in;
+      margin: 0 auto;
+    }
+    .ticket-header {
+      text-align: center;
+      padding: 5px 0;
+      border-bottom: 1px solid #000;
+      margin-bottom: 10px;
+    }
+    .ticket-header h2 {
+      margin: 3px 0;
+      font-size: 14px;
+      color: #000;
+    }
+    .ticket-header p {
+      margin: 2px 0;
+      font-size: 9px;
+    }
+    .info-container {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 10px;
+    }
+    .info-container div {
+      margin: 2px 0;
+    }
+    .info-container strong {
+      color: #000;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 10px;
+    }
+    th, td {
+      padding: 4px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f0f0f0;
+      color: #000;
+    }
+    .total-row {
+      font-weight: bold;
+      background-color: #f0f0f0;
+    }
+    .resumen-row {
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px dashed #000;
+      font-style: italic;
+      color: #000;
+      font-size: 9px;
+    }
+    .center { text-align: center; }
+    .right { text-align: right; }
+    .bold { font-weight: bold; }
+  </style>
+  </head><body>
+  <div class="ticket-header">
+    <h2>💊 FarmaciaLili - Corte 💊</h2>
+    <p>Farmacia Copias, Manzana 012</p>
+    <p>56589 Zoquiapan, Méx</p>
+    <p>Tel: 55 7883 6807</p>
+  </div>
+  
+  <div class="info-container">
+    <div>
+      <div><strong>Fecha:</strong> ${fecha}</div>
+    </div>
+    <div>
+      <div><strong>Cajero:</strong> ${usuarioActivo}</div>
+    </div>
+  </div>
+  
+  <div class="resumen-row">
+    <p><strong>Inicio Caja:</strong> ${formatDinero(inicioCaja)}</p>
+    <p><strong>Efectivo:</strong> ${formatDinero(efectivo)}</p>
+    <p><strong>Tarjeta:</strong> ${formatDinero(tarjeta)}</p>
+    <p><strong>Transferencia:</strong> ${formatDinero(transferencia)}</p>
+    <p><strong>Proveedores:</strong> ${formatDinero(proveedor)}</p>
+    <p><strong>Total Neto:</strong> ${formatDinero(totalGeneral)}</p>
+  </div>
+  <br>
+  <div class="footer">
+    FIRRNA JEFE 
+    <p> ✅ Corte Finalizado ✅ </p>
+    <p> 🩺 Gracias por su confianza 🩺 </p>
+  </div>
+  </body></html>`;
+  
+  ventana.document.write(html);
+  ventana.print();
+  ventana.close();
+}
+
+// Inicialización
+renderVentas();
+// No renderizamos el historial al inicio porque está oculto
+
+// Asegurar que el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  // Evento para búsqueda en tiempo real
+  document.getElementById('searchInput').addEventListener('input', function() {
+    if (this.value.trim() === '') {
+      renderHistorialCompleto();
+    } else {
+      buscarHistorial();
+    }
+  });
+});
+</script>
+</body>
+</html>
+```
